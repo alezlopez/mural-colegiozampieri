@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* Paleta do Manual de Identidade Visual do Colégio Zampieri */
+@theme {
+  --color-verde-escuro: #0f3d24;
+  --color-verde-medio: #1a5c38;
+  --color-verde-claro: #2d7a4e;
+  --color-vinho: #8b1a1a;
+  --color-dourado: #b8860b;
+  --color-dourado-claro: #d4a017;
+  --color-creme: #f5f0e8;
+  --color-branco-quente: #faf8f4;
+  --color-texto: #1f2a24;
+  --color-texto-suave: #5b665f;
+  --color-borda: #e6dfd2;
+
+  --font-titulo: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-lato), system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-branco-quente);
+  color: var(--color-texto);
+}
+
+@layer components {
+  .rotulo {
+    @apply mb-1.5 block text-[11px] font-bold tracking-[0.18em] text-texto-suave uppercase;
+  }
+  .campo {
+    @apply w-full rounded-md border border-borda bg-white px-3 py-2.5 text-[15px] text-texto outline-none transition focus:border-verde-claro focus:ring-2 focus:ring-verde-claro/20;
+  }
+  .botao-primario {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-verde-medio px-5 py-2.5 text-[13px] font-bold tracking-[0.12em] text-white uppercase transition hover:bg-verde-claro disabled:opacity-60;
+  }
+  .botao-dourado {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-dourado px-5 py-2.5 text-[13px] font-bold tracking-[0.12em] text-verde-escuro uppercase transition hover:bg-dourado-claro disabled:opacity-60;
+  }
+  .botao-secundario {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-borda bg-white px-5 py-2.5 text-[13px] font-bold tracking-[0.12em] text-verde-escuro uppercase transition hover:border-verde-claro disabled:opacity-60;
+  }
+  .tricolor {
+    background: linear-gradient(
+      to right,
+      var(--color-verde-claro) 0 33.33%,
+      var(--color-branco-quente) 33.33% 66.66%,
+      var(--color-vinho) 66.66% 100%
+    );
+  }
+}
