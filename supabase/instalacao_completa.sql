@@ -1,9 +1,11 @@
 -- =====================================================================
 -- Mural Colégio Zampieri — instalação completa do banco (projeto Supabase novo)
--- Cole tudo no SQL Editor do Supabase e execute uma única vez.
+-- Cole tudo no SQL Editor do Supabase (Ctrl+A antes de Run: com texto selecionado o editor
+-- executa só a seleção) e execute uma única vez. Roda numa transação: se der erro, nada fica pela metade.
 -- Gerado a partir de supabase/migrations/ (mesmo conteúdo, na mesma ordem).
 -- =====================================================================
 
+begin;
 
 -- ---------------------------------------------------------------------
 -- 20260930000000_mural_inicial.sql
@@ -431,3 +433,5 @@ $$;
 
 revoke all on function public.tokens_para_publicacao(text[]) from public, anon, authenticated;
 grant execute on function public.tokens_para_publicacao(text[]) to service_role;
+
+commit;
