@@ -103,9 +103,18 @@ seletor "Quem vê" de cada publicação.
    `CRON_SECRET`, segredo do gancho e dados da API de WhatsApp).
    - `WHATSAPP_PROVEDOR=meta`: WhatsApp Cloud API oficial. Exige um template de **autenticação** aprovado
      pela Meta (nome em `WHATSAPP_TEMPLATE`, idioma pt_BR, com o código no corpo e no botão "copiar código").
-   - `WHATSAPP_PROVEDOR=webhook`: o painel faz `POST` em `WHATSAPP_WEBHOOK_URL` com
-     `{ telefone, codigo, mensagem }` e `Authorization: Bearer WHATSAPP_TOKEN`. Se a sua API espera outro
-     formato, ajuste só `admin/src/lib/whatsapp.ts`.
+   - `WHATSAPP_PROVEDOR=webhook` (**configuração da escola**): o painel faz `POST` no n8n
+     (`https://n8ncz.colegiozampieri.com/webhook/template_app_mural`) com
+     `Authorization: Bearer WHATSAPP_TOKEN` e o corpo JSON:
+
+     ```json
+     { "telefone": "5511999998888", "codigo": "412603",
+       "mensagem": "Seu código de acesso ao app do Colégio Zampieri é 412603. Não compartilhe com ninguém." }
+     ```
+
+     No n8n: ative **Header Auth** no nó Webhook com o mesmo token, use `telefone` como destinatário e
+     `codigo` como variável do template aprovado. Responda HTTP 200 só depois que o envio der certo — qualquer
+     outro status faz o app mostrar "não foi possível enviar o código".
    - `WHATSAPP_PROVEDOR=log`: imprime o código no console (desenvolvimento; recusado em produção).
 2. Rodar local: `cd admin && npm install && npm run dev` → <http://localhost:3000>.
 3. Produção: importe o repositório na Vercel com **Root Directory = `admin`** e as mesmas variáveis.
