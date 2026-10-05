@@ -11,6 +11,8 @@ import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
+import { TelaBloqueio } from '@/components/TelaBloqueio';
+import { SessaoProvider, useSessao } from '@/lib/sessao';
 import { cores, fontes } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -59,11 +61,24 @@ export default function Layout() {
 
   useAbrirPostDaNotificacao();
 
-  useEffect(() => {
-    if (fontesCarregadas || erroFontes) SplashScreen.hideAsync();
-  }, [fontesCarregadas, erroFontes]);
-
   if (!fontesCarregadas && !erroFontes) return null;
+
+  return (
+    <SessaoProvider>
+      <Navegacao />
+    </SessaoProvider>
+  );
+}
+
+function Navegacao() {
+  const { pronto, bloqueado } = useSessao();
+
+  // Splash fica até sabermos se há sessão (e se a biometria deve trancar o app).
+  useEffect(() => {
+    if (pronto) SplashScreen.hideAsync();
+  }, [pronto]);
+
+  if (!pronto) return null;
 
   return (
     <>
@@ -78,7 +93,12 @@ export default function Layout() {
       >
         <Stack.Screen name="index" options={{ headerShown: false, title: 'Mural' }} />
         <Stack.Screen name="post/[id]" options={{ title: '', headerBackTitle: 'Mural' }} />
+        <Stack.Screen name="entrar" options={{ title: 'Entrar', headerBackTitle: 'Mural' }} />
+        <Stack.Screen name="verificar" options={{ title: 'Confirmação' }} />
+        <Stack.Screen name="biometria" options={{ title: '', headerBackVisible: false, gestureEnabled: false }} />
+        <Stack.Screen name="familia" options={{ title: 'Minha família', headerBackTitle: 'Mural' }} />
       </Stack>
+      {bloqueado && <TelaBloqueio />}
     </>
   );
 }

@@ -13,11 +13,14 @@ export default async function EditarPublicacao({ params }: PageProps<"/posts/[id
   const { data } = await supabase
     .from("posts")
     .select(
-      "id, categoria, titulo, corpo, data_evento, fixado, status, publicado_em, push_enviado_em, push_dispositivos, post_imagens(storage_path, largura, altura, posicao)",
+      "id, categoria, titulo, corpo, data_evento, fixado, turmas, status, publicado_em, push_enviado_em, push_dispositivos, post_imagens(storage_path, largura, altura, posicao)",
     )
     .eq("id", id)
     .maybeSingle();
   if (!data) notFound();
+  const { data: turmasAtivas } = await supabase.rpc("turmas_ativas");
+  // Mantém no seletor turmas antigas que ainda estão na publicação.
+  const turmasDisponiveis = [...new Set([...((turmasAtivas as string[] | null) ?? []), ...(data.turmas ?? [])])].sort();
 
   const imagens = [...(data.post_imagens as (PostInicial["imagens"][number] & { posicao: number })[])]
     .sort((a, b) => a.posicao - b.posicao)
@@ -33,6 +36,7 @@ export default async function EditarPublicacao({ params }: PageProps<"/posts/[id
     status: data.status,
     push_enviado_em: data.push_enviado_em,
     imagens,
+    turmas: data.turmas,
   };
 
   return (
@@ -54,7 +58,7 @@ export default async function EditarPublicacao({ params }: PageProps<"/posts/[id
           <BotaoExcluir />
         </form>
       </div>
-      <PostForm inicial={inicial} />
+      <PostForm inicial={inicial} turmasDisponiveis={turmasDisponiveis} />
     </>
   );
 }

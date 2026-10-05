@@ -11,6 +11,7 @@ type Linha = {
   titulo: string;
   status: "rascunho" | "publicado";
   fixado: boolean;
+  turmas: string[] | null;
   publicado_em: string | null;
   updated_at: string;
   push_enviado_em: string | null;
@@ -51,7 +52,7 @@ export default async function Painel({ searchParams }: PageProps<"/">) {
   let consulta = supabase
     .from("posts")
     .select(
-      "id, categoria, titulo, status, fixado, publicado_em, updated_at, push_enviado_em, push_dispositivos, post_imagens(count)",
+      "id, categoria, titulo, status, fixado, turmas, publicado_em, updated_at, push_enviado_em, push_dispositivos, post_imagens(count)",
     )
     .order("status", { ascending: true })
     .order("fixado", { ascending: false })
@@ -129,6 +130,11 @@ export default async function Painel({ searchParams }: PageProps<"/">) {
                   {p.status === "rascunho" && (
                     <span className="rounded border border-borda px-2 py-0.5 text-[10px] font-bold tracking-[0.12em] text-texto-suave uppercase">
                       Rascunho
+                    </span>
+                  )}
+                  {p.turmas && (
+                    <span className="rounded border border-verde-claro/40 bg-verde-claro/10 px-2 py-0.5 text-[10px] font-bold tracking-[0.08em] text-verde-medio">
+                      {p.turmas.length === 1 ? `Turma ${p.turmas[0]}` : `${p.turmas.length} turmas`}
                     </span>
                   )}
                   {p.fixado && (

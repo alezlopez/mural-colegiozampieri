@@ -15,7 +15,7 @@ function resumo(texto: string, limite = 140) {
   return limpo.length > limite ? `${limpo.slice(0, limite - 1)}…` : limpo;
 }
 
-type PostParaPush = { id: string; categoria: Categoria; titulo: string; corpo: string };
+type PostParaPush = { id: string; categoria: Categoria; titulo: string; corpo: string; turmas: string[] | null };
 
 export type ResultadoPush = { dispositivos: number; enviados: number; falhas: number };
 
@@ -24,18 +24,19 @@ export async function enviarPushDoPost(post: PostParaPush): Promise<ResultadoPus
   const db = criarClienteServico();
   const expo = clienteExpo();
 
+  // Público → todos os aparelhos; por turma → só responsáveis logados com filhos nessas turmas.
+  // O PostgREST limita cada resposta (1000 linhas por padrão): busca em páginas.
   const tokens: string[] = [];
   const PAGINA = 1000;
   for (let de = 0; ; de += PAGINA) {
     const { data, error } = await db
-      .from("push_tokens")
-      .select("token")
-      .is("desativado_em", null)
+      .rpc("tokens_para_publicacao", { p_turmas: post.turmas })
       .order("token")
       .range(de, de + PAGINA - 1);
     if (error) throw new Error(`Erro ao ler dispositivos: ${error.message}`);
-    tokens.push(...data.map((l) => l.token as string).filter((t) => Expo.isExpoPushToken(t)));
-    if (data.length < PAGINA) break;
+    const lote = (data as { token: string }[]).map((l) => l.token);
+    tokens.push(...lote.filter((t) => Expo.isExpoPushToken(t)));
+    if (lote.length < PAGINA) break;
   }
 
   const rotulo = CATEGORIAS[post.categoria].rotulo;

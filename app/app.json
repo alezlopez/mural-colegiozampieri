@@ -48,6 +48,13 @@
           "color": "#0F3D24",
           "defaultChannel": "mural"
         }
+      ],
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Use o Face ID para abrir a área da família no app do Colégio Zampieri."
+        }
       ]
     ],
     "experiments": {

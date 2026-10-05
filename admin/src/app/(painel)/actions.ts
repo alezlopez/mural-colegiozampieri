@@ -31,6 +31,20 @@ function lerImagens(bruto: FormDataEntryValue | null): ImagemEnviada[] | null {
   }
 }
 
+/** null = público; string[] = turmas; undefined = inválido. */
+function lerTurmas(bruto: FormDataEntryValue | null): string[] | null | undefined {
+  try {
+    const valor = JSON.parse(String(bruto ?? "null"));
+    if (valor === null) return null;
+    if (!Array.isArray(valor) || valor.length > 100 || !valor.every((t) => typeof t === "string" && t.length <= 60)) {
+      return undefined;
+    }
+    return [...new Set(valor as string[])];
+  } catch {
+    return undefined;
+  }
+}
+
 export async function salvarPost(_: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
   const { supabase, userId } = await exigirAdmin();
 
@@ -43,12 +57,15 @@ export async function salvarPost(_: EstadoFormulario, formData: FormData): Promi
   const publicar = formData.get("acao") === "publicar";
   const enviarPush = publicar && formData.get("enviar_push") === "on";
   const imagens = lerImagens(formData.get("imagens"));
+  const turmas = lerTurmas(formData.get("turmas"));
 
   if (!ehCategoria(categoria)) return { erro: "Escolha uma categoria." };
   if (!titulo) return { erro: "O título é obrigatório." };
   if (titulo.length > 160) return { erro: "O título deve ter no máximo 160 caracteres." };
   if (corpo.length > 10000) return { erro: "O texto deve ter no máximo 10.000 caracteres." };
   if (!imagens) return { erro: "Não foi possível ler as fotos enviadas. Tente novamente." };
+  if (turmas === undefined) return { erro: "Seleção de turmas inválida." };
+  if (turmas && turmas.length === 0) return { erro: "Escolha ao menos uma turma ou marque \"Todos\"." };
   if (categoria === "galeria" && imagens.length === 0) return { erro: "Adicione ao menos uma foto ao álbum." };
 
   // O navegador converte a data local para ISO (UTC) antes de enviar.
@@ -77,6 +94,7 @@ export async function salvarPost(_: EstadoFormulario, formData: FormData): Promi
     corpo,
     data_evento: dataEvento?.toISOString() ?? null,
     fixado,
+    turmas,
     status: publicar ? "publicado" : "rascunho",
     publicado_em: publicar ? (jaPublicado && anterior?.publicado_em ? anterior.publicado_em : new Date().toISOString()) : null,
   };
@@ -110,7 +128,7 @@ export async function salvarPost(_: EstadoFormulario, formData: FormData): Promi
   let aviso = "";
   if (enviarPush) {
     try {
-      const r = await enviarPushDoPost({ id: postId!, categoria, titulo, corpo });
+      const r = await enviarPushDoPost({ id: postId!, categoria, titulo, corpo, turmas });
       aviso = `&push=${r.enviados}&falhas=${r.falhas}`;
     } catch (e) {
       console.error("[push]", e);

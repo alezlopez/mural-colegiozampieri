@@ -20,6 +20,7 @@ export type PostInicial = {
   status: "rascunho" | "publicado";
   push_enviado_em: string | null;
   imagens: ImagemPost[];
+  turmas: string[] | null;
 };
 
 function urlPublica(caminho: string) {
@@ -54,7 +55,7 @@ async function redimensionar(arquivo: File): Promise<{ blob: Blob; largura: numb
   return { blob, largura, altura };
 }
 
-export function PostForm({ inicial }: { inicial?: PostInicial }) {
+export function PostForm({ inicial, turmasDisponiveis }: { inicial?: PostInicial; turmasDisponiveis: string[] }) {
   const [estado, acao, salvando] = useActionState<EstadoFormulario, FormData>(salvarPost, {});
   const [categoria, setCategoria] = useState<Categoria>(inicial?.categoria ?? "comunicado");
   const [imagens, setImagens] = useState<ImagemPost[]>(inicial?.imagens ?? []);
@@ -69,6 +70,8 @@ export function PostForm({ inicial }: { inicial?: PostInicial }) {
   const [titulo, setTitulo] = useState(inicial?.titulo ?? "");
   const [corpo, setCorpo] = useState(inicial?.corpo ?? "");
   const [fixado, setFixado] = useState(inicial?.fixado ?? false);
+  // null = todas as famílias (público, inclusive visitantes sem login).
+  const [turmas, setTurmas] = useState<string[] | null>(inicial?.turmas ?? null);
   // Editar algo já publicado não dispara push por padrão; só se marcado explicitamente.
   const [enviarPush, setEnviarPush] = useState(!inicial || inicial.status !== "publicado");
   const mostrarData = categoria === "evento" || categoria === "lembrete" || dataLocal !== "";
@@ -116,6 +119,7 @@ export function PostForm({ inicial }: { inicial?: PostInicial }) {
     <form action={acao} className="grid gap-8 lg:grid-cols-[1fr_280px]">
       {inicial && <input type="hidden" name="id" value={inicial.id} />}
       <input type="hidden" name="imagens" value={JSON.stringify(imagens)} />
+      <input type="hidden" name="turmas" value={JSON.stringify(turmas)} />
       <input type="hidden" name="data_evento" value={dataLocal ? new Date(dataLocal).toISOString() : ""} />
 
       <div className="space-y-6">
@@ -242,6 +246,49 @@ export function PostForm({ inicial }: { inicial?: PostInicial }) {
         <div className="space-y-4 rounded-xl border border-borda bg-white p-5">
           <p className="font-titulo text-lg text-verde-escuro">Publicação</p>
 
+          <fieldset className="space-y-2 text-sm">
+            <legend className="rotulo">Quem vê</legend>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={turmas === null}
+                onChange={() => setTurmas(null)}
+                className="h-4 w-4 accent-verde-medio"
+              />
+              <span>Todos (mural público)</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={turmas !== null}
+                onChange={() => setTurmas(turmas ?? [])}
+                disabled={turmasDisponiveis.length === 0}
+                className="h-4 w-4 accent-verde-medio"
+              />
+              <span>Só famílias de turmas específicas</span>
+            </label>
+            {turmasDisponiveis.length === 0 && (
+              <p className="text-xs text-texto-suave">Cadastre alunos na tabela de alunos para segmentar por turma.</p>
+            )}
+            {turmas !== null && (
+              <div className="ml-6 grid max-h-48 grid-cols-2 gap-1 overflow-y-auto rounded-md border border-borda p-2">
+                {turmasDisponiveis.map((t) => (
+                  <label key={t} className="flex items-center gap-2 text-[13px]">
+                    <input
+                      type="checkbox"
+                      checked={turmas.includes(t)}
+                      onChange={(e) =>
+                        setTurmas(e.target.checked ? [...turmas, t] : turmas.filter((x) => x !== t))
+                      }
+                      className="h-3.5 w-3.5 accent-verde-medio"
+                    />
+                    {t}
+                  </label>
+                ))}
+              </div>
+            )}
+          </fieldset>
+
           <label className="flex items-start gap-3 text-sm">
             <input
               type="checkbox"
@@ -268,7 +315,11 @@ export function PostForm({ inicial }: { inicial?: PostInicial }) {
                 {jaNotificado ? "Notificar novamente" : "Enviar notificação"}
               </strong>
               <span className="text-texto-suave">
-                {jaNotificado ? "As famílias já foram avisadas desta publicação." : "Push para todos os celulares com o app."}
+                {jaNotificado
+                  ? "As famílias já foram avisadas desta publicação."
+                  : turmas
+                    ? "Push só para responsáveis logados dessas turmas."
+                    : "Push para todos os celulares com o app."}
               </span>
             </span>
           </label>

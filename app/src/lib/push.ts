@@ -47,7 +47,7 @@ async function obterERegistrarToken() {
  * Sempre que a permissão está concedida, o token é (re)registrado, mantendo
  * `ultimo_acesso` atualizado no servidor.
  */
-export function useNotificacoes() {
+export function useNotificacoes(usuarioId: string | null) {
   const [estado, setEstado] = useState<EstadoPermissao>(pushSuportado ? 'pendente' : 'indisponivel');
 
   const sincronizar = useCallback(
@@ -71,7 +71,9 @@ export function useNotificacoes() {
       if (s === 'active') sincronizar();
     });
     return () => sub.remove();
-  }, [sincronizar]);
+    // Re-registra ao entrar/sair: o servidor associa o aparelho ao responsável logado
+    // (para receber avisos da turma) ou o desassocia ao sair.
+  }, [sincronizar, usuarioId]);
 
   const pedirPermissao = useCallback(async () => {
     if (!pushSuportado) return;

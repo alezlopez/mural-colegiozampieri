@@ -8,6 +8,7 @@ import { PostCard } from '@/components/PostCard';
 import { listarPosts, TAMANHO_PAGINA, type Post } from '@/lib/api';
 import { CATEGORIAS, type Categoria } from '@/lib/categorias';
 import { useNotificacoes } from '@/lib/push';
+import { useSessao } from '@/lib/sessao';
 import { cores, fontes } from '@/lib/theme';
 
 export default function Mural() {
@@ -18,7 +19,8 @@ export default function Mural() {
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const { estado, pedirPermissao } = useNotificacoes();
+  const { usuarioId } = useSessao();
+  const { estado, pedirPermissao } = useNotificacoes(usuarioId);
 
   // Evita que uma resposta antiga (de outro filtro) sobrescreva a atual.
   const requisicao = useRef(0);
@@ -49,7 +51,9 @@ export default function Mural() {
           }
         });
     },
-    [categoria],
+    // usuarioId: ao entrar/sair, o mural muda (avisos da turma dos filhos).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [categoria, usuarioId],
   );
 
   useEffect(() => {

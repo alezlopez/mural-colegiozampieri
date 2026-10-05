@@ -23,7 +23,14 @@ export function PostCard({ post }: { post: Post }) {
 
         <View style={styles.corpo}>
           <View style={styles.topo}>
-            <SeloCategoria categoria={post.categoria} />
+            <View style={styles.selos}>
+              <SeloCategoria categoria={post.categoria} />
+              {post.turmas && (
+                <Text style={styles.turma}>
+                  {post.turmas.length === 1 ? `Turma ${post.turmas[0]}` : 'Suas turmas'}
+                </Text>
+              )}
+            </View>
             <Text style={styles.quando}>{tempoRelativo(post.publicado_em)}</Text>
           </View>
 
@@ -73,6 +80,17 @@ const styles = StyleSheet.create({
   fixadoTexto: { fontFamily: fontes.corpoNegrito, fontSize: 10, letterSpacing: 1.4, color: cores.branco },
   corpo: { padding: 16, gap: 10 },
   topo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  selos: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
+  turma: {
+    fontFamily: fontes.corpoNegrito,
+    fontSize: 11,
+    color: cores.verdeMedio,
+    borderWidth: 1,
+    borderColor: cores.verdeClaro,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
   quando: { fontFamily: fontes.corpo, fontSize: 12, color: cores.textoSuave },
   titulo: { fontFamily: fontes.titulo, fontSize: 20, lineHeight: 26, color: cores.verdeEscuro },
   texto: { fontFamily: fontes.corpo, fontSize: 15, lineHeight: 22, color: cores.texto },

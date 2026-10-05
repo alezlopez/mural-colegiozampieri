@@ -254,12 +254,13 @@ otp_expiry = 3600
 # content_path = "./supabase/templates/password_changed_notification.html"
 
 [auth.sms]
-# Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+# Habilita o login por telefone. Novos cadastros continuam bloqueados por [auth] enable_signup = false:
+# o servidor só cria o usuário depois de conferir código do aluno + telefone.
+enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = false
 # Template for sending OTP to users
-template = "Your code is {{ .Code }}"
+template = "Seu código de acesso ao app do Colégio Zampieri é {{ .Code }}"
 # Controls the minimum amount of time that must pass before sending another sms otp.
 max_frequency = "5s"
 
@@ -274,6 +275,12 @@ max_frequency = "5s"
 # Force log out if the user has been inactive longer than the specified duration.
 # inactivity_timeout = "8h"
 
+# O código de verificação é entregue por WhatsApp pelo servidor (admin/src/app/api/auth/enviar-codigo).
+[auth.hook.send_sms]
+enabled = true
+uri = "env(SUPABASE_AUTH_HOOK_SEND_SMS_URI)"
+secrets = "env(SUPABASE_AUTH_HOOK_SEND_SMS_SECRET)"
+
 # This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
 # [auth.hook.before_user_created]
 # enabled = true
@@ -285,12 +292,15 @@ max_frequency = "5s"
 # uri = "pg-functions://<database>/<schema>/<hook_name>"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
+# O CLI só liga o login por telefone se algum provedor estiver habilitado. Este Twilio é só de
+# fachada: com [auth.hook.send_sms] ativo, o Supabase entrega o código pelo gancho (WhatsApp),
+# nunca pelo Twilio. No Supabase hospedado basta ligar o Phone provider + o hook no painel.
 [auth.sms.twilio]
-enabled = false
-account_sid = ""
-message_service_sid = ""
+enabled = true
+account_sid = "nao-usado"
+message_service_sid = "nao-usado"
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
-auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+auth_token = "nao-usado"
 
 # Multi-factor-authentication is available to Supabase Pro plan.
 [auth.mfa]
