@@ -80,8 +80,9 @@ seletor "Quem vê" de cada publicação.
 ### 1. Supabase
 
 1. Crie um projeto em <https://supabase.com> (região São Paulo).
-2. Aplique a migração: `npx supabase link --project-ref <ref>` e `npx supabase db push`
-   (ou cole `supabase/migrations/*.sql` no SQL Editor).
+2. Crie as tabelas: cole `supabase/instalacao_completa.sql` no **SQL Editor** e execute uma vez
+   (ou, pela linha de comando, `npx supabase link --project-ref <ref>` e `npx supabase db push`).
+   Use só um dos dois caminhos.
 3. Em **Authentication → Providers → Email**, desative "Allow new users to sign up" — só você cria contas.
 4. Crie cada pessoa da equipe em **Authentication → Users → Add user** e depois libere o acesso:
 
