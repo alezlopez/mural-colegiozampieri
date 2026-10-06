@@ -1,13 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { configSupabase } from "../config";
 
 /** Cliente Supabase com a sessão do administrador logado (respeita RLS). */
 export async function criarClienteServidor() {
   const cookieStore = await cookies();
+  const { url, anonKey } = configSupabase();
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll() {

@@ -1,6 +1,6 @@
 # Painel do Mural — imagem para Easypanel (ou qualquer servidor com Docker).
-# As variáveis NEXT_PUBLIC_* entram no código do navegador durante o build,
-# por isso precisam existir como build args (o Easypanel repassa as variáveis de ambiente).
+# Nenhuma variável é necessária no build: tudo (inclusive URL e chave do Supabase) é lido
+# quando o container inicia, a partir das variáveis de ambiente do serviço.
 # Imagem base pelo espelho oficial da AWS: evita o limite de downloads anônimos do Docker Hub.
 
 FROM public.ecr.aws/docker/library/node:22-alpine AS deps
@@ -10,15 +10,9 @@ RUN npm ci
 
 FROM public.ecr.aws/docker/library/node:22-alpine AS build
 WORKDIR /app
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
-    NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN test -n "$NEXT_PUBLIC_SUPABASE_URL" && test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
-  || (echo "Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY nas variáveis do serviço" && exit 1)
 RUN npm run build
 
 FROM public.ecr.aws/docker/library/node:22-alpine AS run

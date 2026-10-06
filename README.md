@@ -125,9 +125,9 @@ seletor "Quem vê" de cada publicação.
       - **Source:** GitHub, repositório `alezlopez/mural-colegiozampieri`, branch de produção,
         **Build Path `/admin`**.
       - **Build:** Dockerfile (arquivo `admin/Dockerfile`).
-   3. **Environment:** as variáveis do `admin/.env.example`. `NEXT_PUBLIC_SUPABASE_URL` e
-      `NEXT_PUBLIC_SUPABASE_ANON_KEY` são usadas também no build; se faltarem, o build para com uma mensagem
-      clara.
+   3. **Environment:** as variáveis do `admin/.env.example`. Todas são lidas quando o container inicia
+      (nenhuma é necessária no build). Se faltar `SUPABASE_URL` ou `SUPABASE_ANON_KEY`, o log do serviço
+      mostra "Variável de ambiente ausente".
    4. **Domains:** o domínio do passo 1, HTTPS ligado, porta **3000**.
    5. **Deploy.** Teste em `https://<domínio>/login`.
 4. **Limpeza diária de aparelhos que desinstalaram o app:** no n8n, um fluxo com *Schedule Trigger*

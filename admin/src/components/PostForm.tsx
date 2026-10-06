@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { salvarPost, type EstadoFormulario } from "@/app/(painel)/actions";
 import { CATEGORIAS, ORDEM_CATEGORIAS, type Categoria } from "@/lib/categorias";
+import type { ConfigSupabase } from "@/lib/config";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 
 const BUCKET = "post-imagens";
@@ -23,8 +24,8 @@ export type PostInicial = {
   turmas: string[] | null;
 };
 
-function urlPublica(caminho: string) {
-  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${caminho}`;
+function urlPublica(supabaseUrl: string, caminho: string) {
+  return `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${caminho}`;
 }
 
 /** "2026-10-05T14:30:00Z" -> "2026-10-05T11:30" no fuso do navegador (para <input type=datetime-local>). */
@@ -55,7 +56,15 @@ async function redimensionar(arquivo: File): Promise<{ blob: Blob; largura: numb
   return { blob, largura, altura };
 }
 
-export function PostForm({ inicial, turmasDisponiveis }: { inicial?: PostInicial; turmasDisponiveis: string[] }) {
+export function PostForm({
+  inicial,
+  turmasDisponiveis,
+  supabase: configSupabase,
+}: {
+  inicial?: PostInicial;
+  turmasDisponiveis: string[];
+  supabase: ConfigSupabase;
+}) {
   const [estado, acao, salvando] = useActionState<EstadoFormulario, FormData>(salvarPost, {});
   const [categoria, setCategoria] = useState<Categoria>(inicial?.categoria ?? "comunicado");
   const [imagens, setImagens] = useState<ImagemPost[]>(inicial?.imagens ?? []);
@@ -79,7 +88,7 @@ export function PostForm({ inicial, turmasDisponiveis }: { inicial?: PostInicial
   async function adicionarFotos(arquivos: FileList | null) {
     if (!arquivos || arquivos.length === 0) return;
     setErroUpload(null);
-    const supabase = criarClienteNavegador();
+    const supabase = criarClienteNavegador(configSupabase);
     const lista = Array.from(arquivos);
     setEnviando((n) => n + lista.length);
 
@@ -198,7 +207,7 @@ export function PostForm({ inicial, turmasDisponiveis }: { inicial?: PostInicial
             {imagens.map((img, i) => (
               <div key={img.storage_path} className="group relative overflow-hidden rounded-lg border border-borda bg-creme">
                 {/* eslint-disable-next-line @next/next/no-img-element -- já redimensionada e servida pelo Supabase */}
-                <img src={urlPublica(img.storage_path)} alt="" className="aspect-square w-full object-cover" />
+                <img src={urlPublica(configSupabase.url, img.storage_path)} alt="" className="aspect-square w-full object-cover" />
                 {i === 0 && (
                   <span className="absolute left-1.5 top-1.5 rounded bg-verde-escuro/85 px-1.5 py-0.5 text-[10px] font-bold text-white">
                     CAPA

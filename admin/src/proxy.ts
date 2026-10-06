@@ -1,14 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { configSupabase } from "@/lib/config";
 
 // Renova a sessão do Supabase a cada requisição e manda quem não está logado para /login.
 // A checagem de "é administrador" acontece no layout do painel (exigirAdmin).
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  const { url, anonKey } = configSupabase();
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll() {

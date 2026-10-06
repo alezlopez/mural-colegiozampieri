@@ -1,8 +1,7 @@
 import { createBrowserClient } from "@supabase/ssr";
+import type { ConfigSupabase } from "../config";
 
-export function criarClienteNavegador() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
+// URL e chave chegam do servidor por props (lidas em tempo de execução), não do build.
+export function criarClienteNavegador({ url, anonKey }: ConfigSupabase) {
+  return createBrowserClient(url, anonKey);
 }

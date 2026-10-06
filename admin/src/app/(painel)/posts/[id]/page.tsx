@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PostForm, type PostInicial } from "@/components/PostForm";
 import { exigirAdmin } from "@/lib/auth";
+import { configSupabase } from "@/lib/config";
 import { formatarDataHora } from "@/lib/datas";
 import { excluirPost } from "../../actions";
 import { BotaoExcluir } from "./BotaoExcluir";
@@ -58,7 +59,7 @@ export default async function EditarPublicacao({ params }: PageProps<"/posts/[id
           <BotaoExcluir />
         </form>
       </div>
-      <PostForm inicial={inicial} turmasDisponiveis={turmasDisponiveis} />
+      <PostForm inicial={inicial} turmasDisponiveis={turmasDisponiveis} supabase={configSupabase()} />
     </>
   );
 }
