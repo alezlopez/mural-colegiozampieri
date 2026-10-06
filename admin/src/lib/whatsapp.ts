@@ -5,7 +5,8 @@ import "server-only";
  *
  * WHATSAPP_PROVEDOR:
  *  - "meta":    WhatsApp Cloud API oficial, com template de autenticação aprovado na Meta.
- *  - "webhook": POST JSON { telefone, codigo, mensagem } para WHATSAPP_WEBHOOK_URL
+ *  - "webhook": POST JSON { telefone, codigo, mensagem } para WHATSAPP_WEBHOOK_URL,
+ *               com o header "Authorization: <WHATSAPP_TOKEN>" (token puro)
  *               (para APIs próprias / Z-API / Evolution etc. — adapte aqui se o formato for outro).
  *  - "log":     só imprime no console. Apenas desenvolvimento; bloqueado em produção.
  */
@@ -50,7 +51,8 @@ export async function enviarCodigoWhatsApp(telefone: string, codigo: string) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.WHATSAPP_TOKEN ? { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}` } : {}),
+        // O Header Auth do n8n compara o valor exato: envia o token puro, sem "Bearer".
+        ...(process.env.WHATSAPP_TOKEN ? { Authorization: process.env.WHATSAPP_TOKEN } : {}),
       },
       body: JSON.stringify({ telefone, codigo, mensagem }),
     });
