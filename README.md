@@ -93,7 +93,7 @@ seletor "Quem vê" de cada publicação.
 5. Login por telefone:
    - **Authentication → Providers → Phone:** ative o provedor.
    - **Authentication → Hooks → Send SMS hook:** tipo HTTPS, URL
-     `https://<seu-painel>/api/auth/enviar-codigo`. Gere o segredo e coloque o mesmo valor em
+     `https://<domínio do painel>/api/auth/enviar-codigo` (só depois do painel no ar, passo 2). Gere o segredo e coloque o mesmo valor em
      `SUPABASE_AUTH_HOOK_SEND_SMS_SECRET` no painel.
    - **Authentication → Rate Limits:** o limite de SMS por hora vale para o projeto inteiro. Aumente antes de
      divulgar o app, senão o início do ano letivo esbarra nele.
@@ -118,8 +118,22 @@ seletor "Quem vê" de cada publicação.
      outro status faz o app mostrar "não foi possível enviar o código".
    - `WHATSAPP_PROVEDOR=log`: imprime o código no console (desenvolvimento; recusado em produção).
 2. Rodar local: `cd admin && npm install && npm run dev` → <http://localhost:3000>.
-3. Produção: importe o repositório na Vercel com **Root Directory = `admin`** e as mesmas variáveis.
-   O `vercel.json` agenda a limpeza diária de aparelhos que desinstalaram o app.
+3. Produção no **Easypanel** (servidor da escola):
+   1. **DNS:** crie um registro A, por exemplo `painel-mural.colegiozampieri.com`, apontando para o IP do
+      servidor.
+   2. **Easypanel → projeto → + Service → App.**
+      - **Source:** GitHub, repositório `alezlopez/mural-colegiozampieri`, branch de produção,
+        **Build Path `/admin`**.
+      - **Build:** Dockerfile (arquivo `admin/Dockerfile`).
+   3. **Environment:** as variáveis do `admin/.env.example`. `NEXT_PUBLIC_SUPABASE_URL` e
+      `NEXT_PUBLIC_SUPABASE_ANON_KEY` são usadas também no build; se faltarem, o build para com uma mensagem
+      clara.
+   4. **Domains:** o domínio do passo 1, HTTPS ligado, porta **3000**.
+   5. **Deploy.** Teste em `https://<domínio>/login`.
+4. **Limpeza diária de aparelhos que desinstalaram o app:** no n8n, um fluxo com *Schedule Trigger*
+   (1x por dia) e *HTTP Request* `GET https://<domínio>/api/cron/push-recibos` com o header
+   `Authorization: Bearer <CRON_SECRET>`. Na Vercel isso seria feito pelo `vercel.json`, mas o plano
+   gratuito da Vercel é só para uso não comercial.
 
 ### 3. App (`app/`)
 
