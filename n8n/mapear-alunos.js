@@ -1,5 +1,5 @@
 // n8n · Code node (Run Once for All Items)
-// Saída: um item por aluno → { id_aluno, telefone (do responsável financeiro), curso }
+// Saída: um item por aluno → { id_aluno, nome, telefone e nome do responsável financeiro, curso }
 const NO_ALUNOS = 'Busca Alunos';
 const NO_RESPONSAVEIS = 'Busca Responsaveis';
 
@@ -23,7 +23,9 @@ return alunos.map((a) => {
   return {
     json: {
       id_aluno: String(a.idDoAluno),
+      nome: String(a.nome ?? '').replace(/\s+/g, ' ').trim(),
       telefone: celular(r?.celular),
+      nome_responsavel: r?.nome ?? null,
       curso: (a.descricaoUltimoCurso ?? '').trim(),
     },
   };
