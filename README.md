@@ -150,6 +150,20 @@ seletor "Quem vê" de cada publicação.
    **Push não funciona no Expo Go** (limitação do Expo desde o SDK 53).
 6. Publicação nas lojas: `npx eas-cli@latest build --platform all` e `npx eas-cli@latest submit`.
 
+**Build local no Android Studio (APK/AAB assinados com a chave da escola):**
+
+1. `app/.env` com os valores de `app/.env.example` (o build local não lê o `eas.json`).
+2. `app/google-services.json` do Firebase (push no Android). Sem ele o app funciona, mas não recebe push.
+3. Chave de upload, gerada uma vez e guardada fora do repositório:
+   `keytool -genkeypair -v -storetype PKCS12 -keystore zampieri-upload.keystore -alias zampieri-upload -keyalg RSA -keysize 2048 -validity 10000`
+4. Em `~/.gradle/gradle.properties` (fora do repositório): `ZAMPIERI_UPLOAD_STORE_FILE` (caminho absoluto do
+   arquivo), `ZAMPIERI_UPLOAD_STORE_PASSWORD`, `ZAMPIERI_UPLOAD_KEY_ALIAS`, `ZAMPIERI_UPLOAD_KEY_PASSWORD`.
+5. `cd app && npx expo prebuild -p android --clean`, depois `cd android && gradlew assembleRelease` (APK em
+   `android/app/build/outputs/apk/release/`) ou `gradlew bundleRelease` (AAB para a Play Store).
+
+O plugin `app/plugins/assinatura-android.js` aplica a assinatura a cada `prebuild`; a pasta `android/` é gerada e
+não vai para o Git.
+
 O app também roda no navegador (`npx expo start --web`) para conferir o layout, mas sem push e sem biometria.
 
 ### Desenvolvimento local com Supabase CLI
