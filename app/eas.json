@@ -1,0 +1,32 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://qrlpwaitkldsswqzucym.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFybHB3YWl0a2xkc3N3cXp1Y3ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTU4ODAsImV4cCI6MjEwNjc5MTg4MH0.n6supfUuUxOSWKSn8yi5M_z1QcDYJhPEsXqeAWfPuMA",
+        "EXPO_PUBLIC_API_URL": "https://appescola.colegiozampieri.com.br"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
