@@ -27,12 +27,14 @@ const alunos = itens(NO_ALUNOS);
 const financeiros = itens(NO_RESPONSAVEIS).filter((r) => r.eResponsavelFinanceiro === 'Sim');
 
 return alunos.map((a) => {
-  const r = financeiros.find((x) => x.idDoAluno === a.idDoAluno);
+  // String nos dois lados: um endpoint pode mandar o id como número e o outro como texto
+  const r = financeiros.find((x) => String(x.idDoAluno) === String(a.idDoAluno));
   return {
     json: {
       id_aluno: String(a.idDoAluno),
       nome: nomeProprio(a.nome),
       telefone: celular(r?.celular),
+      celular_original: r?.celular ?? null, // conferência: veja o que veio quando telefone sair null
       nome_responsavel: r?.nome ? nomeProprio(r.nome) : null,
       curso: (a.descricaoUltimoCurso ?? '').trim(),
     },
