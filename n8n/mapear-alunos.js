@@ -12,6 +12,14 @@ function celular(bruto) {
   return d.length === 11 && d[2] === '9' ? '55' + d : null;
 }
 
+// "MARIA DA SILVA" → "Maria da Silva" (de, da, do, das, dos, e ficam minúsculos)
+const MINUSCULAS = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+function nomeProprio(bruto) {
+  return String(bruto ?? '').toLowerCase().replace(/\s+/g, ' ').trim().split(' ')
+    .map((p, i) => (i > 0 && MINUSCULAS.has(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)))
+    .join(' ');
+}
+
 const itens = (no) => $(no).all().flatMap(({ json }) =>
   Array.isArray(json) ? json.flatMap((p) => p.itens ?? []) : (json.itens ?? [json]));
 
@@ -23,9 +31,9 @@ return alunos.map((a) => {
   return {
     json: {
       id_aluno: String(a.idDoAluno),
-      nome: String(a.nome ?? '').replace(/\s+/g, ' ').trim(),
+      nome: nomeProprio(a.nome),
       telefone: celular(r?.celular),
-      nome_responsavel: r?.nome ?? null,
+      nome_responsavel: r?.nome ? nomeProprio(r.nome) : null,
       curso: (a.descricaoUltimoCurso ?? '').trim(),
     },
   };
