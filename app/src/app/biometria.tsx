@@ -15,7 +15,7 @@ export default function OfertaBiometria() {
     setErro(null);
     const ok = await definirBiometria(true);
     setAtivando(false);
-    if (ok) router.replace('/familia');
+    if (ok) router.dismissTo('/');
     else setErro(`Não foi possível confirmar o ${biometria.nome}. Tente de novo ou ative depois na área da família.`);
   }
 
@@ -32,7 +32,7 @@ export default function OfertaBiometria() {
       <MensagemErro texto={erro} />
       <View style={{ gap: 8, alignSelf: 'stretch' }}>
         <Botao titulo={`Ativar ${biometria.nome}`} onPress={ativar} carregando={ativando} />
-        <Botao titulo="Agora não" onPress={() => router.replace('/familia')} variante="texto" />
+        <Botao titulo="Agora não" onPress={() => router.dismissTo('/')} variante="texto" />
       </View>
     </View>
   );

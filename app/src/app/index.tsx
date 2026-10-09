@@ -4,6 +4,7 @@ import { ActivityIndicator, AppState, FlatList, Platform, RefreshControl, StyleS
 import { Cabecalho } from '@/components/Cabecalho';
 import { ConviteNotificacoes } from '@/components/ConviteNotificacoes';
 import { FiltroCategorias } from '@/components/FiltroCategorias';
+import { FilhosResumo } from '@/components/FilhosResumo';
 import { PostCard } from '@/components/PostCard';
 import { listarPosts, TAMANHO_PAGINA, type Post } from '@/lib/api';
 import { CATEGORIAS, type Categoria } from '@/lib/categorias';
@@ -97,6 +98,7 @@ export default function Mural() {
         renderItem={({ item }) => <PostCard post={item} />}
         ListHeaderComponent={
           <>
+            <FilhosResumo usuarioId={usuarioId} />
             <FiltroCategorias selecionada={categoria} onChange={mudarCategoria} />
             <ConviteNotificacoes estado={estado} onAtivar={pedirPermissao} />
           </>

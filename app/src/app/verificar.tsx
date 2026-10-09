@@ -30,9 +30,9 @@ export default function Verificar() {
     setErro(null);
     try {
       await confirmarCodigo(telefone, valor);
-      // Fecha o fluxo de login e segue para a oferta de biometria (ou direto para a família).
-      router.dismissAll();
-      router.push(biometria.disponivel ? '/biometria' : '/familia');
+      // Fecha o fluxo de login: oferta de biometria (se houver) e depois o mural, já com os filhos no topo.
+      if (biometria.disponivel) router.replace('/biometria');
+      else router.dismissTo('/');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível confirmar.');
       setCodigo('');
