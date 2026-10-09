@@ -118,5 +118,10 @@ equipe (admin) gerencia tudo.
    professor" ou "retirar da turma"). **O painel vale mais que a Mhund:** registro editado aqui fica marcado
    (`editado_no_painel`) e a sincronização não o altera mais; vínculo retirado no painel vai para
    `vinculos_removidos` e não volta. Migração `20261014000000_edicao_manual_estrutura.sql`.
+3c. Turmas no painel: **feito**. Criar (ex.: montar o ano seguinte antes da rematrícula), editar, inativar, excluir
+   (só criada no painel, sem alunos e sem aulas) e grade da turma (professor por disciplina, adicionar, retirar).
+   Renomear usa `renomear_turma()`, que atualiza junto `alunos.turma` e `posts.turmas` (o nome é o elo com o app).
+   A sincronização liga a turma criada no painel à da Mhund de mesmo nome e ano (sem duplicar) e respeita as
+   turmas editadas. Migração `20261015000000_turmas_manuais.sql`. Menu do painel agrupado (Comunicação, Pedagógico).
 4. "Hoje na escola" e frequência no app das famílias.
 5. Notas e boletim (após confirmar as regras).

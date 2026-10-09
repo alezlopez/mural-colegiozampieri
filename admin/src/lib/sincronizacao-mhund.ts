@@ -74,6 +74,8 @@ export type ResumoSincronizacao = {
   simulacao: boolean;
   turmas: number;
   turmasDesativadas: number;
+  /** Turmas criadas à mão no painel que foram reconhecidas (mesmo nome e ano) e ligadas à da Mhund. */
+  turmasLigadasAoPainel: number;
   disciplinas: number;
   professores: number;
   professoresSemEmail: number;
@@ -142,7 +144,28 @@ export async function sincronizarMhund(
     return { mhund_id: p.idDoProfessor, nome: nomeProprio(p.nome), email };
   });
 
-  const linhasTurmas = cursos.map((c) => ({
+  // Turmas do painel: editadas não são regravadas; criadas à mão são ligadas à da Mhund de mesmo nome e ano
+  // (em vez de duplicar). O nome que vale para os alunos é o do painel.
+  const { data: turmasHub, error: erroTurmas } = await db.from("turmas").select("id,mhund_id,ano,nome,editado_no_painel");
+  if (erroTurmas) throw new Error(`Erro ao ler turmas: ${erroTurmas.message}`);
+  const chaveNome = (nome: string) => semAcento(nome).replace(/[º°ª]/g, "o").replace(/\s+/g, " ").trim();
+  const mhundNoHub = new Set(turmasHub.filter((t) => t.mhund_id).map((t) => t.mhund_id as number));
+  const turmasLigadas: { id: number; mhund_id: number }[] = [];
+  for (const c of cursos) {
+    if (mhundNoHub.has(c.idDoCurso)) continue;
+    const manual = turmasHub.find(
+      (t) => !t.mhund_id && t.ano === ano && chaveNome(t.nome as string) === chaveNome(c.descricaoDoCurso) && !turmasLigadas.some((l) => l.id === t.id),
+    );
+    if (manual) turmasLigadas.push({ id: manual.id as number, mhund_id: c.idDoCurso });
+  }
+  const turmasEditadas = new Map(
+    turmasHub
+      .filter((t) => t.editado_no_painel && t.mhund_id)
+      .map((t) => [t.mhund_id as number, t.nome as string] as const),
+  );
+  for (const l of turmasLigadas) turmasEditadas.set(l.mhund_id, turmasHub.find((t) => t.id === l.id)!.nome as string);
+
+  const linhasTurmas = cursos.filter((c) => !turmasEditadas.has(c.idDoCurso)).map((c) => ({
     mhund_id: c.idDoCurso,
     ano,
     nome: c.descricaoDoCurso.replace(/\s+/g, " ").trim(),
@@ -169,7 +192,7 @@ export async function sincronizarMhund(
     if (m.situacao === CURSANDO) cursandoPorAluno.set(codigo, m);
     else if (!cursandoPorAluno.has(codigo)) cursandoPorAluno.set(codigo, null);
   }
-  const nomeDaTurma = new Map(linhasTurmas.map((t) => [t.mhund_id, t.nome]));
+  const nomeDaTurma = new Map<number, string>([...linhasTurmas.map((t) => [t.mhund_id, t.nome] as const), ...turmasEditadas]);
 
   const { data: alunosHub, error: erroAlunos } = await db.from("alunos").select("codigo,nome,ativo,turma");
   if (erroAlunos) throw new Error(`Erro ao ler alunos: ${erroAlunos.message}`);
@@ -249,14 +272,17 @@ export async function sincronizarMhund(
     if (!existente || (!existente.idDoProfessor && g.idDoProfessor)) paresGrade.set(chave, g);
   }
 
-  const { data: turmasExistentes } = await db.from("turmas").select("mhund_id").eq("ano", ano).eq("ativa", true).not("mhund_id", "is", null);
+  const { data: turmasExistentes } = await db.from("turmas").select("mhund_id,editado_no_painel").eq("ano", ano).eq("ativa", true).not("mhund_id", "is", null);
   const idsCursos = new Set(cursos.map((c) => c.idDoCurso));
-  const turmasDesativadas = completa ? (turmasExistentes ?? []).filter((t) => !idsCursos.has(t.mhund_id as number)).length : 0;
+  const turmasDesativadas = completa
+    ? (turmasExistentes ?? []).filter((t) => !idsCursos.has(t.mhund_id as number) && !t.editado_no_painel).length
+    : 0;
 
   const resumo: ResumoSincronizacao = {
     ano,
     simulacao: simular,
-    turmas: linhasTurmas.length,
+    turmas: cursos.length,
+    turmasLigadasAoPainel: turmasLigadas.length,
     turmasDesativadas,
     disciplinas: disciplinas.length,
     professores: linhasProfessores.length,
@@ -285,11 +311,21 @@ export async function sincronizarMhund(
   }
   for (const novo of novosAlunos) hub.set(novo.codigo, novo);
 
+  for (const l of turmasLigadas) {
+    falhou("ligar turma do painel", (await db.from("turmas").update({ mhund_id: l.mhund_id }).eq("id", l.id)).error);
+  }
   falhou("turmas", (await db.from("turmas").upsert(linhasTurmas, { onConflict: "mhund_id" })).error);
   if (turmasDesativadas > 0) {
     falhou(
       "turmas antigas",
-      (await db.from("turmas").update({ ativa: false }).eq("ano", ano).not("mhund_id", "in", `(${[...idsCursos].join(",")})`)).error,
+      (
+        await db
+          .from("turmas")
+          .update({ ativa: false })
+          .eq("ano", ano)
+          .eq("editado_no_painel", false)
+          .not("mhund_id", "in", `(${[...idsCursos].join(",")})`)
+      ).error,
     );
   }
   // Turma nova ganha o horário padrão do turno (editável depois no painel).

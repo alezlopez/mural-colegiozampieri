@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avisos } from "@/components/Avisos";
 import { exigirAdmin } from "@/lib/auth";
+import { SEGMENTOS } from "@/lib/segmentos";
 import { alternarAtivo, atribuirVinculo, excluirProfessor, removerVinculo, salvarProfessor } from "../actions";
 import { BotaoAcesso } from "../BotaoAcesso";
 
@@ -13,12 +14,6 @@ type Vinculo = {
 };
 type Turma = { id: number; nome: string; ano: number; segmento: string };
 
-const SEGMENTOS: Record<string, string> = {
-  infantil: "Educação Infantil",
-  fundamental1: "Fundamental I",
-  fundamental2: "Fundamental II",
-  medio: "Ensino Médio",
-};
 
 export default async function PaginaProfessor({ params, searchParams }: PageProps<"/professores/[id]">) {
   const { supabase } = await exigirAdmin();

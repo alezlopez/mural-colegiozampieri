@@ -1,28 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
+import { MenuCelular, MenuLateral } from "@/components/MenuPainel";
 import { exigirAdmin } from "@/lib/auth";
 import { sair } from "../login/actions";
 
-const LINKS = [
-  { href: "/", rotulo: "Publicações" },
-  { href: "/horarios", rotulo: "Horários" },
-  { href: "/calendario", rotulo: "Calendário" },
-  { href: "/professores", rotulo: "Professores" },
-  { href: "/disciplinas", rotulo: "Disciplinas" },
-  { href: "/fotos", rotulo: "Fotos" },
-];
-
 export default async function LayoutPainel({ children }: LayoutProps<"/">) {
   const { nome, supabase } = await exigirAdmin();
-  const { count: fotosPendentes } = await supabase
+  const { count } = await supabase
     .from("aluno_fotos")
     .select("id", { count: "exact", head: true })
     .eq("status", "pendente");
+  const fotosPendentes = count ?? 0;
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-verde-escuro text-white">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-4 sm:px-6">
+      <header className="relative bg-verde-escuro text-white">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white">
               <Image src="/brasao.png" alt="" width={29} height={36} />
@@ -37,21 +30,17 @@ export default async function LayoutPainel({ children }: LayoutProps<"/">) {
             <form action={sair}>
               <button className="text-creme/80 underline-offset-4 hover:text-white hover:underline">Sair</button>
             </form>
+            <MenuCelular fotosPendentes={fotosPendentes} />
           </div>
         </div>
-        <nav className="mx-auto flex max-w-5xl gap-5 overflow-x-auto px-4 pb-3 text-sm whitespace-nowrap sm:px-6">
-          {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="flex items-center gap-1.5 text-creme/80 hover:text-white">
-              {l.rotulo}
-              {l.href === "/fotos" && fotosPendentes ? (
-                <span className="rounded-full bg-dourado px-1.5 text-[11px] font-bold text-verde-escuro">{fotosPendentes}</span>
-              ) : null}
-            </Link>
-          ))}
-        </nav>
         <div className="tricolor h-1" />
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>
+      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 py-8 sm:px-6">
+        <aside className="hidden w-56 shrink-0 lg:block">
+          <MenuLateral fotosPendentes={fotosPendentes} />
+        </aside>
+        <main className="min-w-0 flex-1">{children}</main>
+      </div>
       <footer className="border-t border-borda py-6 text-center text-xs tracking-[0.15em] text-texto-suave">
         COLÉGIO ZAMPIERI · TRADIÇÃO EM EDUCAÇÃO
       </footer>

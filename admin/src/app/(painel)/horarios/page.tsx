@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { exigirAdmin } from "@/lib/auth";
+import { SEGMENTOS } from "@/lib/segmentos";
 import { conflitosDeProfessor, DIAS_SEMANA, hhmm, minutos, type AulaModelo, type SlotHorario } from "@/lib/horarios";
 import { Avisos } from "@/components/Avisos";
 import { salvarHorario, trocarModeloDaTurma } from "./actions";
@@ -13,12 +14,6 @@ type Vinculo = {
   professores: { nome: string } | null;
 };
 
-const SEGMENTOS: Record<string, string> = {
-  infantil: "Educação Infantil",
-  fundamental1: "Fundamental I",
-  fundamental2: "Fundamental II",
-  medio: "Ensino Médio",
-};
 
 const primeiroNome = (nome: string | undefined) => nome?.split(" ")[0] ?? "";
 
