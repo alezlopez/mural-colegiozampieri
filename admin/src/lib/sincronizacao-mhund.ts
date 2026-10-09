@@ -1,13 +1,23 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ClienteMhund, type MhundCurso, type MhundGrade, type MhundMatricula, type MhundProfessor } from "./mhund";
+import {
+  ClienteMhund,
+  type MhundAluno,
+  type MhundCurso,
+  type MhundGrade,
+  type MhundMatricula,
+  type MhundProfessor,
+  type MhundResponsavel,
+} from "./mhund";
 
-// Copia da Mhund para o hub: turmas, disciplinas, professores, grade (quem dá o quê) e matrículas.
+// Copia da Mhund para o hub: alunos, responsável financeiro (celular e CPF, usados no login do app), turmas,
+// disciplinas, professores, grade (quem dá o quê) e matrículas. Substitui o antigo fluxo semanal do n8n.
 // Regras da API (verificadas): sem data, as listagens devolvem só o que mudou desde a última consulta; com
 // /{ano}/{desde} devolvem tudo o que mudou desde "desde". Coleta completa de matrículas só entre 18h e 8h;
 // de dia, no máximo 30 dias para trás. Por isso a sincronização completa roda de madrugada.
-// Também mantém alunos.ativo/turma em dia: aluno que deixou de "cursar" (situação ≠ L) perde o acesso ao app.
-// Alunos que não existem na Mhund (cadastrados à mão aqui) não são tocados.
+// Mantém alunos em dia: aluno novo cursando entra; quem deixou de "cursar" (situação ≠ L) perde o acesso ao app;
+// troca de turma e de responsável financeiro são atualizadas. Alunos que não existem na Mhund (cadastrados à mão
+// aqui) não são tocados.
 
 const CURSANDO = "L";
 
@@ -20,6 +30,23 @@ function nomeProprio(bruto: string) {
     .split(" ")
     .map((p, i) => (i > 0 && MINUSCULAS.has(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)))
     .join(" ");
+}
+
+// Celular → 55 + DDD + número (corrige máscara, texto, DDD repetido e falta do 9). Mesma regra do antigo Code node.
+export function celular(bruto: unknown) {
+  let d = String(bruto ?? "").replace(/\D/g, "");
+  if ((d.length === 12 || d.length === 13) && d.slice(0, 2) === d.slice(2, 4)) d = d.slice(2);
+  if ((d.length === 12 || d.length === 13) && d.startsWith("55")) d = d.slice(2);
+  if (d.length === 10 && /[6-9]/.test(d[2])) d = d.slice(0, 2) + "9" + d.slice(2);
+  return d.length === 11 && d[2] === "9" ? "55" + d : null;
+}
+
+// CPF só com dígitos; null se inválido (ex.: "999999999-99", usado como CPF em branco na Mhund).
+export function cpfValido(bruto: unknown) {
+  const d = String(bruto ?? "").replace(/\D/g, "");
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return null;
+  const dv = (base: string) => ([...base].reduce((t, n, i) => t + Number(n) * (base.length + 1 - i), 0) * 10) % 11 % 10;
+  return dv(d.slice(0, 9)) === Number(d[9]) && dv(d.slice(0, 10)) === Number(d[10]) ? d : null;
 }
 
 function semAcento(texto: string) {
@@ -55,9 +82,15 @@ export type ResumoSincronizacao = {
   vinculosComMaisDeUmProfessor: number;
   matriculas: number;
   matriculasCursando: number;
+  alunosNovos: number;
   alunosDesativados: string[];
   alunosReativados: string[];
-  alunosForaDoHub: number;
+  vinculosNovos: number;
+  vinculosRemovidos: number;
+  /** Alunos cursando cujo responsável financeiro está sem celular válido na Mhund (família não consegue entrar). */
+  responsaveisSemCelular: string[];
+  /** Alunos cursando sem responsável financeiro marcado na Mhund. */
+  alunosSemResponsavelFinanceiro: string[];
 };
 
 export const DESDE_SEMPRE = "2020-01-01T00:00:00";
@@ -81,6 +114,8 @@ export async function sincronizarMhund(
   const professoresBrutos = await cliente.listar<MhundProfessor>(`Professor/${ano}/${desde}`);
   const grade = await cliente.listar<MhundGrade>(`Grade/${ano}/${desde}`);
   const matriculasBrutas = await cliente.listar<MhundMatricula>(`Matricula/${ano}/${desde}`);
+  const alunosMhund = await cliente.listar<MhundAluno>(`Aluno/${ano}/${desde}`);
+  const responsaveisMhund = await cliente.listar<MhundResponsavel>(`Responsavel/${ano}/${desde}`);
   const agora = new Date().toISOString();
 
   // Professores: a API devolve uma linha por turma/disciplina; um registro por professor, e-mail único.
@@ -127,22 +162,74 @@ export async function sincronizarMhund(
   }
   const nomeDaTurma = new Map(linhasTurmas.map((t) => [t.mhund_id, t.nome]));
 
-  const { data: alunosHub, error: erroAlunos } = await db.from("alunos").select("codigo,ativo,turma");
+  const { data: alunosHub, error: erroAlunos } = await db.from("alunos").select("codigo,nome,ativo,turma");
   if (erroAlunos) throw new Error(`Erro ao ler alunos: ${erroAlunos.message}`);
-  const hub = new Map(alunosHub.map((a) => [a.codigo as string, a as { codigo: string; ativo: boolean; turma: string }]));
+  const hub = new Map(alunosHub.map((a) => [a.codigo as string, a as { codigo: string; nome: string; ativo: boolean; turma: string }]));
+  const dadosAluno = new Map(alunosMhund.map((a) => [String(a.idDoAluno), a]));
+
   const alunosDesativados: string[] = [];
   const alunosReativados: string[] = [];
-  const atualizacoesAlunos: { codigo: string; ativo: boolean; turma: string }[] = [];
+  const novosAlunos: { codigo: string; nome: string; turma: string; ativo: boolean }[] = [];
+  const atualizacoesAlunos: { codigo: string; nome: string; ativo: boolean; turma: string }[] = [];
   for (const [codigo, cursando] of cursandoPorAluno) {
     const atual = hub.get(codigo);
-    if (!atual) continue;
+    const mhund = dadosAluno.get(codigo);
+    const nome = mhund?.nome ? nomeProprio(mhund.nome) : atual?.nome;
+    const turma = cursando
+      ? nomeDaTurma.get(cursando.idDoCurso) ?? mhund?.descricaoUltimoCurso?.trim() ?? atual?.turma
+      : atual?.turma;
+    if (!atual) {
+      // Só entra quem está cursando e tem nome e turma (os dados do aluno vêm na mesma coleta).
+      if (cursando && nome && turma) novosAlunos.push({ codigo, nome, turma, ativo: true });
+      continue;
+    }
     const ativo = Boolean(cursando);
-    const turma = cursando ? nomeDaTurma.get(cursando.idDoCurso) ?? atual.turma : atual.turma;
     if (atual.ativo && !ativo) alunosDesativados.push(codigo);
     if (!atual.ativo && ativo) alunosReativados.push(codigo);
-    if (atual.ativo !== ativo || atual.turma !== turma) atualizacoesAlunos.push({ codigo, ativo, turma });
+    if (atual.ativo !== ativo || atual.turma !== turma || (nome && atual.nome !== nome)) {
+      atualizacoesAlunos.push({ codigo, nome: nome ?? atual.nome, ativo, turma: turma ?? atual.turma });
+    }
   }
-  const alunosForaDoHub = [...cursandoPorAluno.entries()].filter(([c, m]) => m && !hub.has(c)).length;
+
+  // Responsável financeiro de cada aluno (o que entra no app com o próprio celular ou CPF).
+  const financeiro = new Map<string, MhundResponsavel>();
+  for (const r of responsaveisMhund) {
+    if (r.eResponsavelFinanceiro === "Sim" && !financeiro.has(String(r.idDoAluno))) financeiro.set(String(r.idDoAluno), r);
+  }
+  const { data: vinculosHub, error: erroVinculos } = await db.from("aluno_responsaveis").select("aluno_codigo,telefone,nome,cpf");
+  if (erroVinculos) throw new Error(`Erro ao ler responsáveis: ${erroVinculos.message}`);
+  const vinculosAtuais = new Map<string, { telefone: string; nome: string | null; cpf: string | null }[]>();
+  for (const v of vinculosHub) {
+    const lista = vinculosAtuais.get(v.aluno_codigo as string) ?? [];
+    lista.push(v as { telefone: string; nome: string | null; cpf: string | null });
+    vinculosAtuais.set(v.aluno_codigo as string, lista);
+  }
+
+  const codigosNoHub = new Set([...hub.keys(), ...novosAlunos.map((a) => a.codigo)]);
+  const vinculosParaGravar: { aluno_codigo: string; telefone: string; nome: string | null; cpf: string | null }[] = [];
+  const vinculosParaRemover: { aluno_codigo: string; telefone: string }[] = [];
+  const responsaveisSemCelular: string[] = [];
+  for (const [codigo, r] of financeiro) {
+    if (!codigosNoHub.has(codigo)) continue;
+    const telefone = celular(r.celular);
+    const atuais = vinculosAtuais.get(codigo) ?? [];
+    if (!telefone) {
+      // Mantém o acesso que já existe até a secretaria corrigir o celular na Mhund.
+      if (cursandoPorAluno.get(codigo)) responsaveisSemCelular.push(codigo);
+      continue;
+    }
+    const nomeResp = r.nome ? nomeProprio(r.nome) : null;
+    const cpf = cpfValido(r.cpf);
+    const igual = atuais.find((v) => v.telefone === telefone);
+    if (!igual || igual.nome !== nomeResp || igual.cpf !== cpf) {
+      vinculosParaGravar.push({ aluno_codigo: codigo, telefone, nome: nomeResp, cpf });
+    }
+    // Trocou o responsável financeiro ou o celular: o número antigo perde o acesso a este aluno.
+    for (const v of atuais) if (v.telefone !== telefone) vinculosParaRemover.push({ aluno_codigo: codigo, telefone: v.telefone });
+  }
+  const alunosSemResponsavelFinanceiro = completa
+    ? [...cursandoPorAluno.entries()].filter(([c, m]) => m && codigosNoHub.has(c) && !financeiro.has(c)).map(([c]) => c)
+    : [];
 
   const paresGrade = new Map<string, MhundGrade>();
   let vinculosComMaisDeUmProfessor = 0;
@@ -170,15 +257,24 @@ export async function sincronizarMhund(
     vinculosComMaisDeUmProfessor,
     matriculas: matriculasBrutas.length,
     matriculasCursando: matriculasBrutas.filter((m) => m.situacao === CURSANDO).length,
+    alunosNovos: novosAlunos.length,
     alunosDesativados,
     alunosReativados,
-    alunosForaDoHub,
+    vinculosNovos: vinculosParaGravar.length,
+    vinculosRemovidos: vinculosParaRemover.length,
+    responsaveisSemCelular,
+    alunosSemResponsavelFinanceiro,
   };
   if (simular) return resumo;
 
   const falhou = (etapa: string, e: { message: string } | null) => {
     if (e) throw new Error(`Sincronização (${etapa}): ${e.message}`);
   };
+
+  for (let i = 0; i < novosAlunos.length; i += 500) {
+    falhou("alunos novos", (await db.from("alunos").insert(novosAlunos.slice(i, i + 500))).error);
+  }
+  for (const novo of novosAlunos) hub.set(novo.codigo, novo);
 
   falhou("turmas", (await db.from("turmas").upsert(linhasTurmas, { onConflict: "mhund_id" })).error);
   if (turmasDesativadas > 0) {
@@ -235,7 +331,20 @@ export async function sincronizarMhund(
   }
 
   for (const a of atualizacoesAlunos) {
-    falhou("alunos", (await db.from("alunos").update({ ativo: a.ativo, turma: a.turma }).eq("codigo", a.codigo)).error);
+    falhou("alunos", (await db.from("alunos").update({ nome: a.nome, ativo: a.ativo, turma: a.turma }).eq("codigo", a.codigo)).error);
+  }
+
+  for (let i = 0; i < vinculosParaGravar.length; i += 500) {
+    falhou(
+      "responsáveis",
+      (await db.from("aluno_responsaveis").upsert(vinculosParaGravar.slice(i, i + 500), { onConflict: "aluno_codigo,telefone" })).error,
+    );
+  }
+  for (const v of vinculosParaRemover) {
+    falhou(
+      "responsáveis antigos",
+      (await db.from("aluno_responsaveis").delete().eq("aluno_codigo", v.aluno_codigo).eq("telefone", v.telefone)).error,
+    );
   }
 
   return resumo;

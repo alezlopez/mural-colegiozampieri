@@ -91,10 +91,14 @@ equipe (admin) gerencia tudo.
 
 ## Próximos passos
 
-1. Sincronização da estrutura a partir da Mhund: **feita** (`POST /api/cron/sincronizar-mhund`, com
+1. Sincronização com a Mhund: **feita** (`POST /api/cron/sincronizar-mhund`, com
    `Authorization: Bearer <CRON_SECRET>`; `?simular=1` só mostra o que mudaria; `?desde=AAAA-MM-DD` para coleta
-   parcial de dia). Agendar no n8n **de madrugada** (coleta completa). Também desativa no app o aluno que deixou de
-   cursar (situação ≠ L) e atualiza a turma dele; alunos cadastrados à mão (fora da Mhund) não são tocados.
+   parcial de dia). Agendar no n8n **todo dia às 2h** (coleta completa). Uma rotina só, que **substitui o fluxo
+   semanal de alunos/responsáveis do n8n**: turmas, disciplinas, professores, grade, matrículas, alunos (novo
+   cursando entra; quem deixou de cursar, situação ≠ L, perde o acesso ao app; troca de turma e nome) e
+   responsável financeiro (celular e CPF do login; trocou o responsável ou o celular, o número antigo perde o
+   acesso ao aluno; celular inválido na Mhund mantém o acesso atual e aparece em `responsaveisSemCelular`).
+   Alunos cadastrados à mão (fora da Mhund) não são tocados.
 2. Login de professores e diário: **feito**. Secretaria cria o acesso em Painel → Professores (senha provisória,
    troca obrigatória no 1º login); o professor entra pelo mesmo /login e cai em /professor: dia (navega entre
    dias), aulas do horário semanal (ou todas as turmas, se o horário não estiver cadastrado), conteúdo, tarefa com

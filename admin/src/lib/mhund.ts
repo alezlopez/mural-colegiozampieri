@@ -27,6 +27,15 @@ export type MhundMatricula = {
   situacao: string | null;
 };
 
+export type MhundAluno = { idDoAluno: number; nome: string; descricaoUltimoCurso: string | null; situacao: string | null };
+export type MhundResponsavel = {
+  idDoAluno: number;
+  nome: string | null;
+  cpf: string | null;
+  celular: string | null;
+  eResponsavelFinanceiro: string | null;
+};
+
 export class ClienteMhund {
   private chaveTemporaria: string | null = null;
 
