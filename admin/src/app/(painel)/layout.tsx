@@ -27,6 +27,9 @@ export default async function LayoutPainel({ children }: LayoutProps<"/">) {
             <Link href="/" className="text-creme/80 hover:text-white">
               Publicações
             </Link>
+            <Link href="/professores" className="text-creme/80 hover:text-white">
+              Professores
+            </Link>
             <Link href="/fotos" className="flex items-center gap-1.5 text-creme/80 hover:text-white">
               Fotos
               {fotosPendentes ? (

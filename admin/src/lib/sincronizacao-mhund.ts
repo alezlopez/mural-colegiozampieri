@@ -95,7 +95,8 @@ export async function sincronizarMhund(
       email = null;
     }
     if (email) emailsVistos.add(email);
-    return { mhund_id: p.idDoProfessor, nome: nomeProprio(p.nome), email, ativo: true };
+    // "ativo" fica de fora: o bloqueio feito pela secretaria no painel não é desfeito pela sincronização.
+    return { mhund_id: p.idDoProfessor, nome: nomeProprio(p.nome), email };
   });
 
   const linhasTurmas = cursos.map((c) => ({

@@ -66,8 +66,8 @@ Regras de uso da API (observadas):
 - **Recuperação bimestral:** média do bimestre < 6 → avaliação única; se a nota for maior que a média, substitui.
 - **Recuperação final** (por disciplina): média final < 6 → avaliação única; se a nota for maior, **substitui a média
   final pelo valor obtido** (ex.: tirou 8, fica 8; sem teto em 6).
-- **Resultado:** mais de 3 recuperações finais → reprova, ou aprova pelo conselho de classe; menos de 3 e não
-  recuperou → aprova com DP, reprova ou aprova pelo conselho. **Exatamente 3: a confirmar.**
+- **Resultado:** 3 ou mais recuperações finais → reprova, ou aprova pelo conselho de classe; menos de 3 e não
+  recuperou → aprova com DP, reprova ou aprova pelo conselho (confirmado: DP só com menos de 3).
 - **Frequência mínima:** 75%, controlada no total **e por disciplina**.
 - **Arredondamento** (regra da escola, sobre a parte decimal):
 
@@ -95,7 +95,10 @@ equipe (admin) gerencia tudo.
    `Authorization: Bearer <CRON_SECRET>`; `?simular=1` só mostra o que mudaria; `?desde=AAAA-MM-DD` para coleta
    parcial de dia). Agendar no n8n **de madrugada** (coleta completa). Também desativa no app o aluno que deixou de
    cursar (situação ≠ L) e atualiza a turma dele; alunos cadastrados à mão (fora da Mhund) não são tocados.
-2. Login de professores e telas do diário (lançamento rápido no celular).
+2. Login de professores e diário: **feito**. Secretaria cria o acesso em Painel → Professores (senha provisória,
+   troca obrigatória no 1º login); o professor entra pelo mesmo /login e cai em /professor: dia (navega entre
+   dias), aulas do horário semanal (ou todas as turmas, se o horário não estiver cadastrado), conteúdo, tarefa com
+   data de entrega e chamada (toque alterna P / F / FJ).
 3. Calendário anual e horários no painel.
 4. "Hoje na escola" e frequência no app das famílias.
 5. Notas e boletim (após confirmar as regras).
