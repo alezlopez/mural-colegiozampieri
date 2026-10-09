@@ -103,6 +103,14 @@ equipe (admin) gerencia tudo.
    troca obrigatória no 1º login); o professor entra pelo mesmo /login e cai em /professor: dia (navega entre
    dias), aulas do horário semanal (ou todas as turmas, se o horário não estiver cadastrado), conteúdo, tarefa com
    data de entrega e chamada (toque alterna P / F / FJ).
-3. Calendário anual e horários no painel.
+3. Calendário anual e horários no painel: **feito**.
+   - Painel → Horários: lista das turmas (preenchimento e choques), grade semanal por turma (seg–sex × aulas do
+     modelo; opções = disciplinas da grade da turma com o professor), aviso de professor em duas turmas no mesmo
+     horário (compara horas reais, mesmo com modelos diferentes), aulas por semana por disciplina, troca de modelo.
+   - Painel → Horários → Modelos: editar início/fim das aulas, criar modelo (copiando de outro), excluir se sem uso.
+   - Painel → Calendário: ano letivo e 4 bimestres, contagem de dias letivos (meta de 200 da LDB, total e por
+     bimestre), eventos (feriado, recesso, sábado letivo, avaliação, reunião, conselho…; sem aula ou não; público ou
+     interno; escola toda ou algumas turmas) e importação dos feriados nacionais + Sexta-feira Santa (Carnaval e
+     Corpus Christi opcionais, como recesso).
 4. "Hoje na escola" e frequência no app das famílias.
 5. Notas e boletim (após confirmar as regras).
