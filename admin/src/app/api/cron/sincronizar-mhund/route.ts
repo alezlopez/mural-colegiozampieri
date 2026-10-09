@@ -26,6 +26,16 @@ export async function POST(request: Request) {
     return Response.json(resumo);
   } catch (e) {
     console.error("[sincronizar-mhund]", e);
-    return Response.json({ erro: e instanceof Error ? e.message : "Falha na sincronização." }, { status: 502 });
+    const mensagem = e instanceof Error ? e.message : "Falha na sincronização.";
+    const foraDoHorario = /18h às 8h|grande volume/i.test(mensagem);
+    // 424 (e não 502): o proxy do Easypanel troca respostas 502 pela própria página de erro e esconde a mensagem.
+    return Response.json(
+      {
+        erro: foraDoHorario
+          ? "A Mhund só libera a carga completa entre 18h e 8h. Rode à noite, ou use ?desde=AAAA-MM-DD (até 30 dias atrás) para testar de dia."
+          : mensagem,
+      },
+      { status: 424 },
+    );
   }
 }
