@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/horarios", rotulo: "Horários" },
   { href: "/calendario", rotulo: "Calendário" },
   { href: "/professores", rotulo: "Professores" },
+  { href: "/disciplinas", rotulo: "Disciplinas" },
   { href: "/fotos", rotulo: "Fotos" },
 ];
 

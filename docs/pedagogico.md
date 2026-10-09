@@ -112,5 +112,11 @@ equipe (admin) gerencia tudo.
      bimestre), eventos (feriado, recesso, sábado letivo, avaliação, reunião, conselho…; sem aula ou não; público ou
      interno; escola toda ou algumas turmas) e importação dos feriados nacionais + Sexta-feira Santa (Carnaval e
      Corpus Christi opcionais, como recesso).
+3b. Cadastro manual no painel: **feito**. Professores (novo, editar nome/e-mail — troca também o login —, inativar,
+   excluir se nunca lançou aula), disciplinas (nova, editar, inativar, excluir se nunca usada) e atribuição
+   professor × disciplina × turmas (várias turmas de uma vez; substitui o professor anterior; "tirar deste
+   professor" ou "retirar da turma"). **O painel vale mais que a Mhund:** registro editado aqui fica marcado
+   (`editado_no_painel`) e a sincronização não o altera mais; vínculo retirado no painel vai para
+   `vinculos_removidos` e não volta. Migração `20261014000000_edicao_manual_estrutura.sql`.
 4. "Hoje na escola" e frequência no app das famílias.
 5. Notas e boletim (após confirmar as regras).

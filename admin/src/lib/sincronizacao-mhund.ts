@@ -118,14 +118,22 @@ export async function sincronizarMhund(
   const responsaveisMhund = await cliente.listar<MhundResponsavel>(`Responsavel/${ano}/${desde}`);
   const agora = new Date().toISOString();
 
+  // O que a secretaria editou no painel vale mais que a Mhund: esses registros não são regravados.
+  const { data: profsHub, error: erroProfs } = await db.from("professores").select("mhund_id,email,editado_no_painel");
+  if (erroProfs) throw new Error(`Erro ao ler professores: ${erroProfs.message}`);
+  const profsEditados = new Set(profsHub.filter((x) => x.editado_no_painel && x.mhund_id).map((x) => x.mhund_id as number));
+  const donoDoEmail = new Map(profsHub.filter((x) => x.email).map((x) => [x.email as string, x.mhund_id as number | null]));
+
   // Professores: a API devolve uma linha por turma/disciplina; um registro por professor, e-mail único.
   const professores = new Map<number, MhundProfessor>();
   for (const p of professoresBrutos) if (!professores.has(p.idDoProfessor)) professores.set(p.idDoProfessor, p);
   const emailsVistos = new Set<string>();
   const emailsRepetidos: string[] = [];
-  const linhasProfessores = [...professores.values()].map((p) => {
+  const linhasProfessores = [...professores.values()].filter((p) => !profsEditados.has(p.idDoProfessor)).map((p) => {
     let email = p.email?.trim().toLowerCase() || null;
-    if (email && emailsVistos.has(email)) {
+    // Repetido na Mhund, ou já usado aqui por outro professor (ex.: cadastrado à mão): fica sem e-mail.
+    const dono = email ? donoDoEmail.get(email) : undefined;
+    if (email && (emailsVistos.has(email) || (dono !== undefined && dono !== p.idDoProfessor))) {
       emailsRepetidos.push(email);
       email = null;
     }
@@ -146,12 +154,13 @@ export async function sincronizarMhund(
     ativa: true,
     sincronizado_em: agora,
   }));
-  const linhasDisciplinas = disciplinas.map((d) => ({
-    mhund_id: d.idDaDisciplina,
-    nome: nomeProprio(d.nomeDaDisciplina),
-    abreviacao: d.abreviacaoDaDisciplina,
-    ativa: true,
-  }));
+  const { data: discHub, error: erroDisc } = await db.from("disciplinas").select("mhund_id").eq("editado_no_painel", true);
+  if (erroDisc) throw new Error(`Erro ao ler disciplinas: ${erroDisc.message}`);
+  const discEditadas = new Set(discHub.map((x) => x.mhund_id as number));
+  // "ativa" fica de fora: disciplina desativada no painel continua desativada.
+  const linhasDisciplinas = disciplinas
+    .filter((d) => !discEditadas.has(d.idDaDisciplina))
+    .map((d) => ({ mhund_id: d.idDaDisciplina, nome: nomeProprio(d.nomeDaDisciplina), abreviacao: d.abreviacaoDaDisciplina }));
 
   // Situação de cada aluno da Mhund: cursa se tem alguma matrícula "L" no ano.
   const cursandoPorAluno = new Map<string, MhundMatricula | null>();
@@ -249,7 +258,7 @@ export async function sincronizarMhund(
     simulacao: simular,
     turmas: linhasTurmas.length,
     turmasDesativadas,
-    disciplinas: linhasDisciplinas.length,
+    disciplinas: disciplinas.length,
     professores: linhasProfessores.length,
     professoresSemEmail: linhasProfessores.filter((p) => !p.email).length,
     emailsRepetidos: [...new Set(emailsRepetidos)],
@@ -305,8 +314,16 @@ export async function sincronizarMhund(
   const idDisciplina = new Map((d ?? []).map((x) => [x.mhund_id as number, x.id as number]));
   const idProfessor = new Map((p ?? []).map((x) => [x.mhund_id as number, x.id as number]));
 
+  // Vínculos atribuídos ou removidos no painel ficam como a secretaria deixou.
+  const [{ data: vincEditados }, { data: vincRemovidos }] = await Promise.all([
+    db.from("turma_disciplinas").select("turma_id,disciplina_id").eq("editado_no_painel", true),
+    db.from("vinculos_removidos").select("turma_id,disciplina_id"),
+  ]);
+  const doPainel = new Set([...(vincEditados ?? []), ...(vincRemovidos ?? [])].map((v) => `${v.turma_id}:${v.disciplina_id}`));
+
   const linhasVinculos = [...paresGrade.values()]
     .filter((g) => idTurma.has(g.idDoCurso) && idDisciplina.has(g.idDaDisciplina))
+    .filter((g) => !doPainel.has(`${idTurma.get(g.idDoCurso)}:${idDisciplina.get(g.idDaDisciplina)}`))
     .map((g) => ({
       turma_id: idTurma.get(g.idDoCurso)!,
       disciplina_id: idDisciplina.get(g.idDaDisciplina)!,
