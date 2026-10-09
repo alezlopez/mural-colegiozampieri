@@ -12,6 +12,10 @@ Objetivo final: **sair da Mhund** (R$ 1.700/mês). Começa pelo pedagógico, em 
 
 O banco já nasce independente: ids próprios, e a Mhund aparece só como referência (`mhund_id`).
 
+> **Decisão (10/2026):** o pedagógico de 2027 é montado **no painel**. A sincronização com a Mhund grava só alunos e
+> responsável financeiro; turmas, disciplinas, professores, grade e matrículas só com `?pedagogico=1` (desligado).
+> O que já foi importado de 2026 fica como base. Lista do que falta: `docs/checklist.md`.
+
 ## Princípios
 
 - **Lançamento único.** O professor lança só aqui (diário, frequência, tarefas, notas). Nada na Mhund.

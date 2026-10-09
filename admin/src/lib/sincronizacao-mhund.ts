@@ -72,6 +72,8 @@ function turno(bruto: string | null) {
 export type ResumoSincronizacao = {
   ano: number;
   simulacao: boolean;
+  /** false: só alunos e responsáveis são gravados (turmas, disciplinas, professores, grade e matrículas não). */
+  pedagogico: boolean;
   turmas: number;
   turmasDesativadas: number;
   /** Turmas criadas à mão no painel que foram reconhecidas (mesmo nome e ano) e ligadas à da Mhund. */
@@ -104,17 +106,23 @@ export async function sincronizarMhund(
     simular = false,
     desde = DESDE_SEMPRE,
     cliente = ClienteMhund.doAmbiente(),
-  }: { simular?: boolean; desde?: string; cliente?: ClienteMhund } = {},
+    pedagogico = false,
+  }: { simular?: boolean; desde?: string; cliente?: ClienteMhund; pedagogico?: boolean } = {},
 ): Promise<ResumoSincronizacao> {
   // Só a coleta completa sabe quais turmas deixaram de existir.
   const completa = desde === DESDE_SEMPRE;
   // Em sequência: a API da Mhund responde com erro a consultas simultâneas.
   const cursos = await cliente.listar<MhundCurso>(`Curso/${ano}/${desde}`);
-  const disciplinas = await cliente.listar<{ idDaDisciplina: number; nomeDaDisciplina: string; abreviacaoDaDisciplina: string | null }>(
-    `Disciplina/${ano}`, // sem variante por data; devolve sempre a lista toda
-  );
-  const professoresBrutos = await cliente.listar<MhundProfessor>(`Professor/${ano}/${desde}`);
-  const grade = await cliente.listar<MhundGrade>(`Grade/${ano}/${desde}`);
+  // Estrutura pedagógica (disciplinas, professores, grade, turmas e matrículas no hub) só com pedagogico=true.
+  // Decisão de 10/2026: o pedagógico nasce no painel para 2027; da Mhund vêm só alunos e responsáveis. As turmas e
+  // matrículas da Mhund continuam sendo LIDAS para saber quem está cursando e o nome da turma do aluno.
+  const disciplinas = pedagogico
+    ? await cliente.listar<{ idDaDisciplina: number; nomeDaDisciplina: string; abreviacaoDaDisciplina: string | null }>(
+        `Disciplina/${ano}`, // sem variante por data; devolve sempre a lista toda
+      )
+    : [];
+  const professoresBrutos = pedagogico ? await cliente.listar<MhundProfessor>(`Professor/${ano}/${desde}`) : [];
+  const grade = pedagogico ? await cliente.listar<MhundGrade>(`Grade/${ano}/${desde}`) : [];
   const matriculasBrutas = await cliente.listar<MhundMatricula>(`Matricula/${ano}/${desde}`);
   const alunosMhund = await cliente.listar<MhundAluno>(`Aluno/${ano}/${desde}`);
   const responsaveisMhund = await cliente.listar<MhundResponsavel>(`Responsavel/${ano}/${desde}`);
@@ -274,13 +282,14 @@ export async function sincronizarMhund(
 
   const { data: turmasExistentes } = await db.from("turmas").select("mhund_id,editado_no_painel").eq("ano", ano).eq("ativa", true).not("mhund_id", "is", null);
   const idsCursos = new Set(cursos.map((c) => c.idDoCurso));
-  const turmasDesativadas = completa
+  const turmasDesativadas = completa && pedagogico
     ? (turmasExistentes ?? []).filter((t) => !idsCursos.has(t.mhund_id as number) && !t.editado_no_painel).length
     : 0;
 
   const resumo: ResumoSincronizacao = {
     ano,
     simulacao: simular,
+    pedagogico,
     turmas: cursos.length,
     turmasLigadasAoPainel: turmasLigadas.length,
     turmasDesativadas,
@@ -311,76 +320,78 @@ export async function sincronizarMhund(
   }
   for (const novo of novosAlunos) hub.set(novo.codigo, novo);
 
-  for (const l of turmasLigadas) {
-    falhou("ligar turma do painel", (await db.from("turmas").update({ mhund_id: l.mhund_id }).eq("id", l.id)).error);
-  }
-  falhou("turmas", (await db.from("turmas").upsert(linhasTurmas, { onConflict: "mhund_id" })).error);
-  if (turmasDesativadas > 0) {
-    falhou(
-      "turmas antigas",
-      (
-        await db
-          .from("turmas")
-          .update({ ativa: false })
-          .eq("ano", ano)
-          .eq("editado_no_painel", false)
-          .not("mhund_id", "in", `(${[...idsCursos].join(",")})`)
-      ).error,
-    );
-  }
-  // Turma nova ganha o horário padrão do turno (editável depois no painel).
-  const { data: modelos } = await db.from("modelos_horario").select("id,nome");
-  for (const [turnoTurma, nomeModelo] of [["manha", "Manhã"], ["tarde", "Tarde"]] as const) {
-    const modelo = modelos?.find((m) => m.nome === nomeModelo);
-    if (modelo) {
-      await db.from("turmas").update({ modelo_horario_id: modelo.id }).eq("turno", turnoTurma).is("modelo_horario_id", null);
+  if (pedagogico) {
+    for (const l of turmasLigadas) {
+      falhou("ligar turma do painel", (await db.from("turmas").update({ mhund_id: l.mhund_id }).eq("id", l.id)).error);
     }
-  }
-  falhou("disciplinas", (await db.from("disciplinas").upsert(linhasDisciplinas, { onConflict: "mhund_id" })).error);
-  // O e-mail fica livre se outro professor já o usa aqui (ex.: cadastrado à mão).
-  falhou("professores", (await db.from("professores").upsert(linhasProfessores, { onConflict: "mhund_id" })).error);
+    falhou("turmas", (await db.from("turmas").upsert(linhasTurmas, { onConflict: "mhund_id" })).error);
+    if (turmasDesativadas > 0) {
+      falhou(
+        "turmas antigas",
+        (
+          await db
+            .from("turmas")
+            .update({ ativa: false })
+            .eq("ano", ano)
+            .eq("editado_no_painel", false)
+            .not("mhund_id", "in", `(${[...idsCursos].join(",")})`)
+        ).error,
+      );
+    }
+    // Turma nova ganha o horário padrão do turno (editável depois no painel).
+    const { data: modelos } = await db.from("modelos_horario").select("id,nome");
+    for (const [turnoTurma, nomeModelo] of [["manha", "Manhã"], ["tarde", "Tarde"]] as const) {
+      const modelo = modelos?.find((m) => m.nome === nomeModelo);
+      if (modelo) {
+        await db.from("turmas").update({ modelo_horario_id: modelo.id }).eq("turno", turnoTurma).is("modelo_horario_id", null);
+      }
+    }
+    falhou("disciplinas", (await db.from("disciplinas").upsert(linhasDisciplinas, { onConflict: "mhund_id" })).error);
+    // O e-mail fica livre se outro professor já o usa aqui (ex.: cadastrado à mão).
+    falhou("professores", (await db.from("professores").upsert(linhasProfessores, { onConflict: "mhund_id" })).error);
 
-  // Mapas Mhund → ids do hub.
-  const [{ data: t }, { data: d }, { data: p }] = await Promise.all([
-    db.from("turmas").select("id,mhund_id").not("mhund_id", "is", null),
-    db.from("disciplinas").select("id,mhund_id").not("mhund_id", "is", null),
-    db.from("professores").select("id,mhund_id").not("mhund_id", "is", null),
-  ]);
-  const idTurma = new Map((t ?? []).map((x) => [x.mhund_id as number, x.id as number]));
-  const idDisciplina = new Map((d ?? []).map((x) => [x.mhund_id as number, x.id as number]));
-  const idProfessor = new Map((p ?? []).map((x) => [x.mhund_id as number, x.id as number]));
+    // Mapas Mhund → ids do hub.
+    const [{ data: t }, { data: d }, { data: p }] = await Promise.all([
+      db.from("turmas").select("id,mhund_id").not("mhund_id", "is", null),
+      db.from("disciplinas").select("id,mhund_id").not("mhund_id", "is", null),
+      db.from("professores").select("id,mhund_id").not("mhund_id", "is", null),
+    ]);
+    const idTurma = new Map((t ?? []).map((x) => [x.mhund_id as number, x.id as number]));
+    const idDisciplina = new Map((d ?? []).map((x) => [x.mhund_id as number, x.id as number]));
+    const idProfessor = new Map((p ?? []).map((x) => [x.mhund_id as number, x.id as number]));
 
-  // Vínculos atribuídos ou removidos no painel ficam como a secretaria deixou.
-  const [{ data: vincEditados }, { data: vincRemovidos }] = await Promise.all([
-    db.from("turma_disciplinas").select("turma_id,disciplina_id").eq("editado_no_painel", true),
-    db.from("vinculos_removidos").select("turma_id,disciplina_id"),
-  ]);
-  const doPainel = new Set([...(vincEditados ?? []), ...(vincRemovidos ?? [])].map((v) => `${v.turma_id}:${v.disciplina_id}`));
+    // Vínculos atribuídos ou removidos no painel ficam como a secretaria deixou.
+    const [{ data: vincEditados }, { data: vincRemovidos }] = await Promise.all([
+      db.from("turma_disciplinas").select("turma_id,disciplina_id").eq("editado_no_painel", true),
+      db.from("vinculos_removidos").select("turma_id,disciplina_id"),
+    ]);
+    const doPainel = new Set([...(vincEditados ?? []), ...(vincRemovidos ?? [])].map((v) => `${v.turma_id}:${v.disciplina_id}`));
 
-  const linhasVinculos = [...paresGrade.values()]
-    .filter((g) => idTurma.has(g.idDoCurso) && idDisciplina.has(g.idDaDisciplina))
-    .filter((g) => !doPainel.has(`${idTurma.get(g.idDoCurso)}:${idDisciplina.get(g.idDaDisciplina)}`))
-    .map((g) => ({
-      turma_id: idTurma.get(g.idDoCurso)!,
-      disciplina_id: idDisciplina.get(g.idDaDisciplina)!,
-      professor_id: g.idDoProfessor ? idProfessor.get(g.idDoProfessor) ?? null : null,
-    }));
-  for (let i = 0; i < linhasVinculos.length; i += 500) {
-    falhou("grade", (await db.from("turma_disciplinas").upsert(linhasVinculos.slice(i, i + 500), { onConflict: "turma_id,disciplina_id" })).error);
-  }
+    const linhasVinculos = [...paresGrade.values()]
+      .filter((g) => idTurma.has(g.idDoCurso) && idDisciplina.has(g.idDaDisciplina))
+      .filter((g) => !doPainel.has(`${idTurma.get(g.idDoCurso)}:${idDisciplina.get(g.idDaDisciplina)}`))
+      .map((g) => ({
+        turma_id: idTurma.get(g.idDoCurso)!,
+        disciplina_id: idDisciplina.get(g.idDaDisciplina)!,
+        professor_id: g.idDoProfessor ? idProfessor.get(g.idDoProfessor) ?? null : null,
+      }));
+    for (let i = 0; i < linhasVinculos.length; i += 500) {
+      falhou("grade", (await db.from("turma_disciplinas").upsert(linhasVinculos.slice(i, i + 500), { onConflict: "turma_id,disciplina_id" })).error);
+    }
 
-  const linhasMatriculas = matriculasBrutas
-    .filter((m) => hub.has(String(m.idDoAluno)) && idTurma.has(m.idDoCurso))
-    .map((m) => ({
-      aluno_codigo: String(m.idDoAluno),
-      turma_id: idTurma.get(m.idDoCurso)!,
-      ano,
-      numero_chamada: m.numeroDeChamada,
-      situacao: m.situacao,
-      ativa: m.situacao === CURSANDO,
-    }));
-  for (let i = 0; i < linhasMatriculas.length; i += 500) {
-    falhou("matrículas", (await db.from("matriculas").upsert(linhasMatriculas.slice(i, i + 500), { onConflict: "aluno_codigo,turma_id" })).error);
+    const linhasMatriculas = matriculasBrutas
+      .filter((m) => hub.has(String(m.idDoAluno)) && idTurma.has(m.idDoCurso))
+      .map((m) => ({
+        aluno_codigo: String(m.idDoAluno),
+        turma_id: idTurma.get(m.idDoCurso)!,
+        ano,
+        numero_chamada: m.numeroDeChamada,
+        situacao: m.situacao,
+        ativa: m.situacao === CURSANDO,
+      }));
+    for (let i = 0; i < linhasMatriculas.length; i += 500) {
+      falhou("matrículas", (await db.from("matriculas").upsert(linhasMatriculas.slice(i, i + 500), { onConflict: "aluno_codigo,turma_id" })).error);
+    }
   }
 
   for (const a of atualizacoesAlunos) {
