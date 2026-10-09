@@ -38,20 +38,20 @@ export default function Entrar() {
           <Text style={styles.sobretitulo}>ÁREA DA FAMÍLIA</Text>
           <Text style={styles.titulo}>Entrar como responsável</Text>
           <Text style={styles.texto}>
-            Use o código do aluno e o celular cadastrado na secretaria. Enviaremos um código de confirmação pelo WhatsApp.
+            Use o código do aluno ou o CPF do responsável financeiro, e o celular cadastrado na secretaria. Enviaremos um código de confirmação pelo WhatsApp.
           </Text>
         </View>
 
         <Campo
-          rotulo="Código do aluno"
+          rotulo="Código do aluno ou CPF"
           value={codigoAluno}
           onChangeText={setCodigoAluno}
           autoCapitalize="characters"
           autoCorrect={false}
           returnKeyType="next"
           onSubmitEditing={() => campoTelefone.current?.focus()}
-          placeholder="Ex.: 2024017"
-          ajuda="Está na carteirinha e nos boletos da escola."
+          placeholder="Código do aluno ou CPF"
+          ajuda="O CPF é o do responsável financeiro. O código do aluno está na carteirinha e nos boletos."
         />
         <Campo
           ref={campoTelefone}

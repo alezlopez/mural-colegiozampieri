@@ -31,7 +31,7 @@ O mural continua público. O login é opcional e libera os **avisos da turma dos
 e a área "Minha família".
 
 ```
-App: código do aluno + celular ──► painel /api/auth/solicitar ──► confere em alunos + aluno_responsaveis
+App: código do aluno (ou CPF) + celular ──► painel /api/auth/solicitar ──► confere em alunos + aluno_responsaveis
                                                                   (e cria o usuário na 1ª vez)
 App: signInWithOtp(celular) ──► Supabase gera o código ──► gancho /api/auth/enviar-codigo ──► WhatsApp
 App: digita o código ──► verifyOtp ──► sessão salva no Keychain/Keystore do aparelho
@@ -40,6 +40,9 @@ App: (opcional) ativa Face ID / digital ──► nas próximas aberturas, a bio
 
 - A biometria **não** é um login no servidor: ela protege a sessão já guardada no aparelho (mesmo modelo dos
   apps de banco). Trocar de celular ou sair da conta exige novo código pelo WhatsApp.
+- No primeiro campo o responsável pode digitar o **código do aluno** ou o **CPF do responsável financeiro**
+  (11 dígitos válidos, com ou sem pontuação). O celular continua obrigatório: o código só vai para o WhatsApp
+  cadastrado, então saber o CPF de alguém não basta para entrar.
 - Um responsável com vários filhos entra uma vez: todos os alunos ligados àquele telefone aparecem.
 - Proteções: 5 tentativas erradas por telefone (20 por IP) a cada 15 min; telefone fora do cadastro não
   recebe código nem por chamada direta ao Supabase (o cadastro público está desligado); o código expira e
@@ -53,8 +56,8 @@ A secretaria (ou uma rotina de sincronização com o sistema da escola) mantém 
 -- telefone: 55 + DDD + número, só dígitos
 insert into public.alunos (codigo, nome, turma, ativo) values
   ('2024017', 'Giulia Rossi', '3A', true);
-insert into public.aluno_responsaveis (aluno_codigo, telefone, nome) values
-  ('2024017', '5511999998888', 'Ana Rossi');
+insert into public.aluno_responsaveis (aluno_codigo, telefone, nome, cpf) values
+  ('2024017', '5511999998888', 'Ana Rossi', '52998224725');  -- cpf: só dígitos, opcional
 ```
 
 Aluno com `ativo = false` deixa de dar acesso. As turmas cadastradas aparecem automaticamente no painel, no

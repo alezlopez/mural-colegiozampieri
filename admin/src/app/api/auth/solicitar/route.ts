@@ -1,8 +1,10 @@
 import { criarClienteServico } from "@/lib/supabase/servico";
+import { normalizarCpf } from "@/lib/cpf";
 import { normalizarTelefone } from "@/lib/telefone";
 
 // Primeiro passo do login do responsável no app:
-// confere se o código do aluno pertence a um aluno ativo com aquele telefone cadastrado
+// confere se o código do aluno (ou o CPF do responsável financeiro) pertence a um aluno ativo
+// com aquele telefone cadastrado
 // e garante que o usuário existe no Supabase Auth. O app então pede o código (signInWithOtp).
 
 const JANELA_MIN = 15;
@@ -33,7 +35,9 @@ export async function POST(request: Request) {
 
   const codigo = typeof dados.codigo_aluno === "string" ? dados.codigo_aluno.trim() : "";
   const telefone = typeof dados.telefone === "string" ? normalizarTelefone(dados.telefone) : null;
-  if (!codigo || codigo.length > 40) return resposta({ erro: "Informe o código do aluno." }, 400);
+  if (!codigo || codigo.length > 40) return resposta({ erro: "Informe o código do aluno ou o CPF." }, 400);
+  // O mesmo campo aceita CPF: 11 dígitos (com ou sem pontuação) e dígitos verificadores válidos.
+  const cpf = /^[\d.\-\s]+$/.test(codigo) ? normalizarCpf(codigo) : null;
   if (!telefone) return resposta({ erro: "Informe um celular válido com DDD." }, 400);
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
@@ -52,13 +56,14 @@ export async function POST(request: Request) {
     return resposta({ erro: `Muitas tentativas. Aguarde ${JANELA_MIN} minutos e tente de novo.` }, 429);
   }
 
-  const { data: vinculo, error } = await db
+  const consulta = db
     .from("aluno_responsaveis")
     .select("aluno_codigo, alunos!inner(ativo)")
-    .eq("aluno_codigo", codigo)
     .eq("telefone", telefone)
-    .eq("alunos.ativo", true)
-    .maybeSingle();
+    .eq("alunos.ativo", true);
+  // Pelo CPF podem vir vários filhos: basta um vínculo ativo.
+  const { data: vinculos, error } = await (cpf ? consulta.eq("cpf", cpf) : consulta.eq("aluno_codigo", codigo)).limit(1);
+  const vinculo = vinculos?.[0];
   if (error) {
     console.error("[solicitar]", error);
     return resposta({ erro: "Erro ao validar os dados. Tente novamente." }, 500);
@@ -68,7 +73,7 @@ export async function POST(request: Request) {
 
   if (!vinculo) {
     return resposta(
-      { erro: "Código do aluno e telefone não conferem com o cadastro da escola. Procure a secretaria se precisar atualizar." },
+      { erro: "Código do aluno (ou CPF) e telefone não conferem com o cadastro da escola. Procure a secretaria se precisar atualizar." },
       404,
     );
   }

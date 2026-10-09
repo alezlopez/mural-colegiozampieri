@@ -79,7 +79,7 @@ export async function registrarPushToken(token: string, plataforma: 'ios' | 'and
   if (error) throw new Error(`Falha ao registrar dispositivo: ${error.message}`);
 }
 
-/** Passo 1 do login: confere código do aluno + telefone no cadastro da escola. */
+/** Passo 1 do login: confere código do aluno (ou CPF do responsável financeiro) + telefone no cadastro da escola. */
 export async function solicitarAcesso(codigoAluno: string, telefone: string): Promise<string> {
   if (!API_URL) throw new Error('Configure EXPO_PUBLIC_API_URL no arquivo .env');
   let resp: Response;

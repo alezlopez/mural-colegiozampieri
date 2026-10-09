@@ -434,4 +434,14 @@ $$;
 revoke all on function public.tokens_para_publicacao(text[]) from public, anon, authenticated;
 grant execute on function public.tokens_para_publicacao(text[]) to service_role;
 
+-- ---------------------------------------------------------------------
+-- 20261009000000_cpf_responsavel.sql
+-- ---------------------------------------------------------------------
+-- Login também pelo CPF do responsável financeiro (além do código do aluno).
+-- Só dígitos; a validação dos dígitos verificadores acontece no n8n e no painel.
+alter table public.aluno_responsaveis
+  add column if not exists cpf text check (cpf ~ '^[0-9]{11}$');
+
+create index if not exists aluno_responsaveis_cpf_idx on public.aluno_responsaveis (cpf);
+
 commit;
