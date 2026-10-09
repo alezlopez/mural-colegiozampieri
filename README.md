@@ -66,6 +66,13 @@ seletor "Quem vê" de cada publicação.
 > Ao inserir em lote pelo supabase-js, envie **todas** as colunas em todas as linhas (inclusive `ativo`):
 > colunas ausentes em algumas linhas viram `null` e o lote inteiro é recusado.
 
+### Carteirinha do aluno
+
+Na área da família, cada filho tem uma carteirinha digital com QR que muda a cada 30 segundos. Quem escaneia abre
+`https://<domínio do painel>/v/<código>`, que confere o código no banco (`validar_carteirinha`) e registra a leitura em
+`carteirinha_validacoes`. A carteirinha identifica o aluno; não substitui a CIE exigida por lei para meia-entrada.
+Plano do Clube e próximos passos: [`docs/plano-ecossistema.md`](docs/plano-ecossistema.md).
+
 ## Segurança
 
 - O app usa apenas a chave **anon** do Supabase. As políticas RLS só liberam leitura de publicações com

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Redirect, router } from 'expo-router';
-import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Botao, MensagemErro } from '@/components/Formulario';
 import { listarFilhos, type Aluno } from '@/lib/api';
 import { useSessao } from '@/lib/sessao';
@@ -54,7 +54,13 @@ export default function Familia() {
         <Text style={styles.texto}>Nenhum aluno ativo vinculado a este telefone. Procure a secretaria.</Text>
       )}
       {filhos?.map((a) => (
-        <View key={a.codigo} style={styles.cartao}>
+        <Pressable
+          key={a.codigo}
+          style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.7 }]}
+          onPress={() => router.push({ pathname: '/carteirinha/[codigo]', params: { codigo: a.codigo } })}
+          accessibilityRole="button"
+          accessibilityHint="Abre a carteirinha digital do aluno"
+        >
           <View style={styles.inicial}>
             <Text style={styles.inicialTexto}>{a.nome.trim().charAt(0).toUpperCase()}</Text>
           </View>
@@ -63,8 +69,9 @@ export default function Familia() {
             <Text style={styles.detalhe}>
               Turma {a.turma} · código {a.codigo}
             </Text>
+            <Text style={styles.link}>Ver carteirinha ›</Text>
           </View>
-        </View>
+        </Pressable>
       ))}
 
       <Text style={styles.nota}>
@@ -118,6 +125,7 @@ const styles = StyleSheet.create({
   },
   inicialTexto: { fontFamily: fontes.titulo, fontSize: 20, color: cores.douradoClaro },
   nome: { fontFamily: fontes.titulo, fontSize: 18, color: cores.verdeEscuro },
+  link: { fontFamily: fontes.corpoNegrito, fontSize: 13, color: cores.verdeClaro, marginTop: 4 },
   detalhe: { fontFamily: fontes.corpo, fontSize: 13, color: cores.textoSuave, marginTop: 2 },
   nota: {
     fontFamily: fontes.corpo,

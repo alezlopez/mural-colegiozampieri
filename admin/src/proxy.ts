@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { configSupabase } from "@/lib/config";
 
 // Renova a sessão do Supabase a cada requisição e manda quem não está logado para /login.
+// /v/<código> (validação da carteirinha) é pública e fica fora do matcher.
 // A checagem de "é administrador" acontece no layout do painel (exigirAdmin).
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -41,5 +42,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|api/|icon.png|brasao.png).*)"],
+  matcher: ["/((?!_next/static|_next/image|api/|v/|icon.png|brasao.png).*)"],
 };

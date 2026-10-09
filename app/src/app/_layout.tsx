@@ -97,6 +97,7 @@ function Navegacao() {
         <Stack.Screen name="verificar" options={{ title: 'Confirmação' }} />
         <Stack.Screen name="biometria" options={{ title: '', headerBackVisible: false, gestureEnabled: false }} />
         <Stack.Screen name="familia" options={{ title: 'Minha família', headerBackTitle: 'Mural' }} />
+        <Stack.Screen name="carteirinha/[codigo]" options={{ title: 'Carteirinha', headerBackTitle: 'Família' }} />
       </Stack>
       {bloqueado && <TelaBloqueio />}
     </>

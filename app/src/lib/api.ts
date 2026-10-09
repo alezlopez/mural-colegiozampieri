@@ -74,6 +74,20 @@ export async function listarFilhos(): Promise<Aluno[]> {
   return data;
 }
 
+/** Endereço que vai no QR da carteirinha (muda a cada 30 s; o painel confere e registra a leitura). */
+export async function enderecoCarteirinha(codigoAluno: string): Promise<string> {
+  if (!API_URL) throw new Error('Configure EXPO_PUBLIC_API_URL no arquivo .env');
+  const { data, error } = await supabase.rpc('carteirinha_aluno_token', { p_aluno: codigoAluno });
+  if (error || typeof data !== 'string') throw new Error('Não foi possível gerar a carteirinha. Verifique sua internet.');
+  return `${API_URL}/v/${encodeURIComponent(data)}`;
+}
+
+export async function buscarFilho(codigo: string): Promise<Aluno | null> {
+  const { data, error } = await supabase.from('alunos').select('codigo,nome,turma').eq('codigo', codigo).maybeSingle();
+  if (error) throw new Error('Não foi possível carregar o aluno.');
+  return data;
+}
+
 export async function registrarPushToken(token: string, plataforma: 'ios' | 'android') {
   const { error } = await supabase.rpc('registrar_push_token', { p_token: token, p_plataforma: plataforma });
   if (error) throw new Error(`Falha ao registrar dispositivo: ${error.message}`);
