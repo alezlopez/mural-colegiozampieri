@@ -459,6 +459,8 @@ create table if not exists public.segredos (
   valor text not null
 );
 alter table public.segredos enable row level security;
+-- Além da RLS sem políticas, tira o acesso padrão que o Supabase dá às tabelas novas.
+revoke all on table public.segredos from anon, authenticated;
 
 insert into public.segredos (nome, valor)
 -- gen_random_uuid() e sha256() são do próprio Postgres: não dependem de onde o pgcrypto foi instalado.
