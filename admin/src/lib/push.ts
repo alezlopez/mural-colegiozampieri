@@ -137,3 +137,25 @@ export async function verificarRecibos() {
 
   return { verificados: processados.length, desativados: desativar.size };
 }
+
+/** Notificação para os aparelhos de um usuário (ex.: responsável que enviou a foto do aluno). */
+export async function enviarPushParaUsuario(userId: string, titulo: string, corpo: string, url?: string) {
+  const db = criarClienteServico();
+  const { data, error } = await db.from("push_tokens").select("token").eq("user_id", userId).is("desativado_em", null);
+  if (error) throw new Error(`Erro ao ler dispositivos: ${error.message}`);
+  const tokens = (data ?? []).map((l) => l.token as string).filter((t) => Expo.isExpoPushToken(t));
+  if (tokens.length === 0) return;
+  const expo = clienteExpo();
+  const mensagens: ExpoPushMessage[] = tokens.map((to) => ({
+    to,
+    title: titulo,
+    body: corpo,
+    data: url ? { url } : undefined,
+    sound: "default",
+    channelId: CANAL_ANDROID,
+    priority: "high",
+  }));
+  for (const lote of expo.chunkPushNotifications(mensagens)) {
+    await expo.sendPushNotificationsAsync(lote);
+  }
+}

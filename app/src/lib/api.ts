@@ -88,6 +88,69 @@ export async function buscarFilho(codigo: string): Promise<Aluno | null> {
   return data;
 }
 
+export const BUCKET_FOTOS_ALUNOS = 'fotos-alunos';
+
+export type FotoAluno = {
+  /** Endereço temporário da foto aprovada (a que aparece na carteirinha). */
+  aprovadaUrl: string | null;
+  /** Situação do último envio, quando ainda não foi aprovado. */
+  ultimoEnvio: { status: 'pendente' | 'recusada'; motivo: string | null } | null;
+};
+
+export async function buscarFotoAluno(codigo: string): Promise<FotoAluno> {
+  const { data, error } = await supabase
+    .from('aluno_fotos')
+    .select('caminho,status,motivo_recusa,enviado_em')
+    .eq('aluno_codigo', codigo)
+    .in('status', ['aprovada', 'pendente', 'recusada'])
+    .order('enviado_em', { ascending: false })
+    .limit(5);
+  if (error) throw new Error('Não foi possível carregar a foto.');
+
+  const aprovada = data.find((f) => f.status === 'aprovada');
+  const ultimo = data[0];
+  let aprovadaUrl: string | null = null;
+  if (aprovada) {
+    const { data: assinada } = await supabase.storage
+      .from(BUCKET_FOTOS_ALUNOS)
+      .createSignedUrl(aprovada.caminho, 60 * 60);
+    aprovadaUrl = assinada?.signedUrl ?? null;
+  }
+  return {
+    aprovadaUrl,
+    ultimoEnvio:
+      ultimo && ultimo.status !== 'aprovada'
+        ? { status: ultimo.status as 'pendente' | 'recusada', motivo: ultimo.motivo_recusa }
+        : null,
+  };
+}
+
+function uuidV4() {
+  const h = Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16));
+  h[12] = '4';
+  h[16] = ((parseInt(h[16], 16) & 0x3) | 0x8).toString(16);
+  const s = h.join('');
+  return `${s.slice(0, 8)}-${s.slice(8, 12)}-${s.slice(12, 16)}-${s.slice(16, 20)}-${s.slice(20)}`;
+}
+
+function base64ParaBytes(base64: string) {
+  const binario = atob(base64);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+  return bytes;
+}
+
+/** Envia a foto (JPEG em base64, já reduzida) e a registra para aprovação da secretaria. */
+export async function enviarFotoAluno(codigo: string, jpegBase64: string) {
+  const caminho = `${codigo}/${uuidV4()}.jpg`;
+  const { error: erroUpload } = await supabase.storage
+    .from(BUCKET_FOTOS_ALUNOS)
+    .upload(caminho, base64ParaBytes(jpegBase64), { contentType: 'image/jpeg', upsert: false });
+  if (erroUpload) throw new Error('Não foi possível enviar a foto. Verifique sua internet.');
+  const { error } = await supabase.rpc('registrar_foto_aluno', { p_aluno: codigo, p_caminho: caminho });
+  if (error) throw new Error(error.code === '54000' ? error.message : 'Não foi possível registrar a foto.');
+}
+
 export async function registrarPushToken(token: string, plataforma: 'ios' | 'android') {
   const { error } = await supabase.rpc('registrar_push_token', { p_token: token, p_plataforma: plataforma });
   if (error) throw new Error(`Falha ao registrar dispositivo: ${error.message}`);

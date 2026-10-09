@@ -4,7 +4,11 @@ import { exigirAdmin } from "@/lib/auth";
 import { sair } from "../login/actions";
 
 export default async function LayoutPainel({ children }: LayoutProps<"/">) {
-  const { nome } = await exigirAdmin();
+  const { nome, supabase } = await exigirAdmin();
+  const { count: fotosPendentes } = await supabase
+    .from("aluno_fotos")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pendente");
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -19,7 +23,21 @@ export default async function LayoutPainel({ children }: LayoutProps<"/">) {
               <span className="block text-[10px] font-bold tracking-[0.2em] text-dourado-claro">PAINEL DO MURAL</span>
             </span>
           </Link>
+          <nav className="ml-2 hidden items-center gap-4 text-sm sm:flex">
+            <Link href="/" className="text-creme/80 hover:text-white">
+              Publicações
+            </Link>
+            <Link href="/fotos" className="flex items-center gap-1.5 text-creme/80 hover:text-white">
+              Fotos
+              {fotosPendentes ? (
+                <span className="rounded-full bg-dourado px-1.5 text-[11px] font-bold text-verde-escuro">{fotosPendentes}</span>
+              ) : null}
+            </Link>
+          </nav>
           <div className="ml-auto flex items-center gap-4 text-sm">
+            <Link href="/fotos" className="text-creme/80 hover:text-white sm:hidden">
+              Fotos{fotosPendentes ? ` (${fotosPendentes})` : ""}
+            </Link>
             <span className="hidden text-creme/80 sm:inline">Olá, {nome}</span>
             <form action={sair}>
               <button className="text-creme/80 underline-offset-4 hover:text-white hover:underline">Sair</button>

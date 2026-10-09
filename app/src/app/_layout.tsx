@@ -29,14 +29,14 @@ if (Platform.OS !== 'web') {
   });
 }
 
-/** Toque na notificação abre a publicação correspondente (data.url = "/post/<id>"). */
+/** Toque na notificação abre a tela indicada (data.url = "/post/<id>" ou "/carteirinha/<código>"). */
 function useAbrirPostDaNotificacao() {
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
     function abrir(notificacao: Notifications.Notification) {
       const url = notificacao.request.content.data?.url;
-      if (typeof url === 'string' && url.startsWith('/post/')) {
+      if (typeof url === 'string' && (url.startsWith('/post/') || url.startsWith('/carteirinha/'))) {
         router.push(url as `/post/${string}`);
       }
     }

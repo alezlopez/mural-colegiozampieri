@@ -55,6 +55,14 @@
         {
           "faceIDPermission": "Use o Face ID para abrir a área da família no app do Colégio Zampieri."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Escolha uma foto do aluno para a carteirinha do Colégio Zampieri.",
+          "cameraPermission": "Tire uma foto do aluno para a carteirinha do Colégio Zampieri.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

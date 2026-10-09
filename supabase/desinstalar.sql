@@ -6,10 +6,13 @@ begin;
 drop policy if exists "admin envia fotos" on storage.objects;
 drop policy if exists "admin atualiza fotos" on storage.objects;
 drop policy if exists "admin remove fotos" on storage.objects;
--- O bucket post-imagens fica: o Supabase bloqueia apagar buckets por SQL e a instalação o reaproveita.
+drop policy if exists "responsável envia foto do filho" on storage.objects;
+drop policy if exists "responsável e admin veem fotos de alunos" on storage.objects;
+drop policy if exists "admin remove fotos de alunos" on storage.objects;
+-- Os buckets post-imagens e fotos-alunos ficam: o Supabase bloqueia apagar buckets por SQL e a instalação o reaproveita.
 
 drop table if exists
-  public.carteirinha_validacoes, public.segredos,
+  public.aluno_fotos, public.carteirinha_validacoes, public.segredos,
   public.push_tickets, public.push_tokens, public.post_imagens, public.posts,
   public.login_tentativas, public.aluno_responsaveis, public.alunos, public.admins
   cascade;
@@ -18,7 +21,8 @@ drop function if exists
   public.is_admin(), public.touch_updated_at(), public.registrar_push_token(text, text),
   public.meu_telefone(), public.minhas_turmas(), public.turmas_ativas(),
   public.tokens_para_publicacao(text[]),
-  public.carteirinha_assinatura(text), public.carteirinha_aluno_token(text), public.validar_carteirinha(text)
+  public.carteirinha_assinatura(text), public.carteirinha_aluno_token(text), public.validar_carteirinha(text),
+  public.eh_responsavel(text), public.registrar_foto_aluno(text, text), public.revisar_foto_aluno(uuid, boolean, text)
   cascade;
 
 drop type if exists public.post_categoria, public.post_status cascade;

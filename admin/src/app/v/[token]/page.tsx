@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Metadata } from "next";
+import { BUCKET_FOTOS_ALUNOS } from "@/lib/fotos";
 import { criarClienteServico } from "@/lib/supabase/servico";
 
 // Página aberta ao escanear o QR da carteirinha digital (pública: quem escaneia não tem login).
@@ -26,12 +27,26 @@ const MENSAGENS: Record<string, string> = {
 export default async function PaginaValidacao({ params }: PageProps<"/v/[token]">) {
   const { token } = await params;
   let resultado: Resultado | null = null;
+  let fotoUrl: string | null = null;
   try {
-    const { data, error } = await criarClienteServico().rpc("validar_carteirinha", {
-      p_token: decodeURIComponent(token).slice(0, 200),
-    });
+    const db = criarClienteServico();
+    const { data, error } = await db.rpc("validar_carteirinha", { p_token: decodeURIComponent(token).slice(0, 200) });
     if (error) throw error;
     resultado = (data as Resultado[])[0] ?? null;
+
+    // Foto aprovada, com link que expira em 2 minutos (foto de criança nunca fica em endereço fixo).
+    if (resultado?.valido && resultado.codigo) {
+      const { data: foto } = await db
+        .from("aluno_fotos")
+        .select("caminho")
+        .eq("aluno_codigo", resultado.codigo)
+        .eq("status", "aprovada")
+        .maybeSingle();
+      if (foto) {
+        const { data: assinada } = await db.storage.from(BUCKET_FOTOS_ALUNOS).createSignedUrl(foto.caminho, 120);
+        fotoUrl = assinada?.signedUrl ?? null;
+      }
+    }
   } catch (e) {
     console.error("[carteirinha] validação", e);
   }
@@ -63,14 +78,23 @@ export default async function PaginaValidacao({ params }: PageProps<"/v/[token]"
                   <p className="text-sm text-texto-suave">Ano letivo {resultado?.ano_letivo}</p>
                 </div>
               </div>
-              <div className="rounded-lg bg-creme px-4 py-3">
-                <p className="font-titulo text-2xl leading-snug text-verde-escuro">{resultado?.nome}</p>
-                <p className="mt-1 text-sm text-texto">{resultado?.turma}</p>
-                <p className="text-sm text-texto-suave">Código {resultado?.codigo}</p>
+              <div className="flex gap-4 rounded-lg bg-creme px-4 py-3">
+                {fotoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element -- link assinado e temporário do Supabase
+                  <img src={fotoUrl} alt={`Foto de ${resultado?.nome}`} className="h-32 w-24 shrink-0 rounded-md object-cover" />
+                )}
+                <div>
+                  <p className="font-titulo text-2xl leading-snug text-verde-escuro">{resultado?.nome}</p>
+                  <p className="mt-1 text-sm text-texto">{resultado?.turma}</p>
+                  <p className="text-sm text-texto-suave">Código {resultado?.codigo}</p>
+                </div>
               </div>
               <p className="text-xs text-texto-suave">
-                Confira com um documento com foto, se necessário. Esta carteirinha identifica o aluno; não substitui a
-                Carteira de Identificação Estudantil (CIE) exigida para meia-entrada.
+                {fotoUrl
+                  ? "Confira se a foto corresponde a quem apresenta a carteirinha."
+                  : "Carteirinha sem foto aprovada: confira com um documento com foto, se necessário."}{" "}
+                Esta carteirinha identifica o aluno; não substitui a Carteira de Identificação Estudantil (CIE) exigida
+                para meia-entrada.
               </p>
             </>
           ) : (
