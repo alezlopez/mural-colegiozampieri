@@ -16,7 +16,7 @@ export default async function PaginaTurma({ params, searchParams }: PageProps<"/
 
   const [{ data: turma }, { data: vinculosBrutos }, { data: professores }, { data: disciplinas }, { data: modelos }, { count: alunos }, { count: aulas }] =
     await Promise.all([
-      supabase.from("turmas").select("id,nome,ano,segmento,turno,serie,letra,modelo_horario_id,ativa,mhund_id,editado_no_painel").eq("id", id).maybeSingle(),
+      supabase.from("turmas").select("id,nome,ano,segmento,turno,serie,letra,modelo_horario_id,ultima_serie,ativa,mhund_id,editado_no_painel").eq("id", id).maybeSingle(),
       supabase
         .from("turma_disciplinas")
         .select("disciplina_id,professor_id,editado_no_painel,disciplinas(nome)")

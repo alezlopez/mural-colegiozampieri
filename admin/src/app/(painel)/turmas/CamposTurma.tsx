@@ -8,6 +8,7 @@ type Turma = {
   serie: string | null;
   letra: string | null;
   modelo_horario_id: number | null;
+  ultima_serie: boolean;
 };
 
 /** Campos do cadastro de turma (novo e edição). */
@@ -64,6 +65,10 @@ export function CamposTurma({ turma, ano, modelos }: { turma?: Turma; ano: numbe
             </option>
           ))}
         </select>
+      </label>
+      <label className="flex items-center gap-2 text-sm sm:col-span-6">
+        <input type="checkbox" name="ultima_serie" defaultChecked={turma?.ultima_serie ?? false} />
+        Turma de conclusão (última série da escola: quem não volta no ano seguinte se formou, não evadiu)
       </label>
     </div>
   );

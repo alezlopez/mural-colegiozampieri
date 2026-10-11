@@ -9,6 +9,7 @@ import {
   type MhundProfessor,
   type MhundResponsavel,
 } from "./mhund";
+import { lerTudo } from "./ler-tudo";
 
 // Copia da Mhund para o hub: alunos, responsável financeiro (celular e CPF, usados no login do app), turmas,
 // disciplinas, professores, grade (quem dá o quê) e matrículas. Substitui o antigo fluxo semanal do n8n.
@@ -129,8 +130,7 @@ export async function sincronizarMhund(
   const agora = new Date().toISOString();
 
   // O que a secretaria editou no painel vale mais que a Mhund: esses registros não são regravados.
-  const { data: profsHub, error: erroProfs } = await db.from("professores").select("mhund_id,email,editado_no_painel");
-  if (erroProfs) throw new Error(`Erro ao ler professores: ${erroProfs.message}`);
+  const profsHub = await lerTudo((de, ate) => db.from("professores").select("mhund_id,email,editado_no_painel").order("id").range(de, ate));
   const profsEditados = new Set(profsHub.filter((x) => x.editado_no_painel && x.mhund_id).map((x) => x.mhund_id as number));
   const donoDoEmail = new Map(profsHub.filter((x) => x.email).map((x) => [x.email as string, x.mhund_id as number | null]));
 
@@ -154,8 +154,7 @@ export async function sincronizarMhund(
 
   // Turmas do painel: editadas não são regravadas; criadas à mão são ligadas à da Mhund de mesmo nome e ano
   // (em vez de duplicar). O nome que vale para os alunos é o do painel.
-  const { data: turmasHub, error: erroTurmas } = await db.from("turmas").select("id,mhund_id,ano,nome,editado_no_painel");
-  if (erroTurmas) throw new Error(`Erro ao ler turmas: ${erroTurmas.message}`);
+  const turmasHub = await lerTudo((de, ate) => db.from("turmas").select("id,mhund_id,ano,nome,editado_no_painel").order("id").range(de, ate));
   const chaveNome = (nome: string) => semAcento(nome).replace(/[º°ª]/g, "o").replace(/\s+/g, " ").trim();
   const mhundNoHub = new Set(turmasHub.filter((t) => t.mhund_id).map((t) => t.mhund_id as number));
   const turmasLigadas: { id: number; mhund_id: number }[] = [];
@@ -182,6 +181,8 @@ export async function sincronizarMhund(
     letra: c.turma,
     turno: turno(c.turno),
     segmento: segmentoDoCurso(c),
+    // Última série oferecida (3º ano do Médio): quem sai dela se formou, não evadiu. Editável no painel.
+    ultima_serie: segmentoDoCurso(c) === "medio" && /terceir|3\s*[ºª°o]?\s*(ano|s[ée]rie)/i.test(`${c.descricaoDaSerieDoCurso ?? ""} ${c.descricaoDoCurso}`),
     ativa: true,
     sincronizado_em: agora,
   }));
@@ -202,8 +203,7 @@ export async function sincronizarMhund(
   }
   const nomeDaTurma = new Map<number, string>([...linhasTurmas.map((t) => [t.mhund_id, t.nome] as const), ...turmasEditadas]);
 
-  const { data: alunosHub, error: erroAlunos } = await db.from("alunos").select("codigo,nome,ativo,turma");
-  if (erroAlunos) throw new Error(`Erro ao ler alunos: ${erroAlunos.message}`);
+  const alunosHub = await lerTudo((de, ate) => db.from("alunos").select("codigo,nome,ativo,turma").order("codigo").range(de, ate));
   const hub = new Map(alunosHub.map((a) => [a.codigo as string, a as { codigo: string; nome: string; ativo: boolean; turma: string }]));
   const dadosAluno = new Map(alunosMhund.map((a) => [String(a.idDoAluno), a]));
 
@@ -236,8 +236,9 @@ export async function sincronizarMhund(
   for (const r of responsaveisMhund) {
     if (r.eResponsavelFinanceiro === "Sim" && !financeiro.has(String(r.idDoAluno))) financeiro.set(String(r.idDoAluno), r);
   }
-  const { data: vinculosHub, error: erroVinculos } = await db.from("aluno_responsaveis").select("aluno_codigo,telefone,nome,cpf");
-  if (erroVinculos) throw new Error(`Erro ao ler responsáveis: ${erroVinculos.message}`);
+  const vinculosHub = await lerTudo((de, ate) =>
+    db.from("aluno_responsaveis").select("aluno_codigo,telefone,nome,cpf").order("aluno_codigo").order("telefone").range(de, ate),
+  );
   const vinculosAtuais = new Map<string, { telefone: string; nome: string | null; cpf: string | null }[]>();
   for (const v of vinculosHub) {
     const lista = vinculosAtuais.get(v.aluno_codigo as string) ?? [];

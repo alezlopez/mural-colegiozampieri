@@ -31,6 +31,7 @@ function dadosTurma(formData: FormData, caminho: string) {
     serie: String(formData.get("serie") ?? "").trim() || null,
     letra: String(formData.get("letra") ?? "").trim().toUpperCase() || null,
     modelo_horario_id: Number.isInteger(modelo) && modelo > 0 ? modelo : null,
+    ultima_serie: formData.get("ultima_serie") === "on",
   };
 }
 

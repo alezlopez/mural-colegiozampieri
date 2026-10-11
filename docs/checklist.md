@@ -11,9 +11,10 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 ## 0. Decisões tomadas (não rediscutir sem fato novo)
 
-- [x] Pedagógico de 2027 é montado **no painel**; não sincroniza turmas/professores/disciplinas/grade/matrículas
-      de 2026 (dados de 2026 já importados ficam como base: professores e disciplinas reaproveitáveis).
-- [x] Da Mhund vêm, toda noite, só **alunos e responsável financeiro** (login do app).
+- [x] O sistema já trabalha com **2027** (o app não será usado em 2026). A base de 2026 (alunos, turmas,
+      matrículas) fica como referência para a rematrícula.
+- [x] Da Mhund vêm **turmas, alunos e matrículas de 2027** (já cadastrados lá) e o responsável financeiro.
+      Professores de 2027 são atribuídos **no painel** (ainda não definidos).
 - [x] O que é editado no painel vale mais que a Mhund (`editado_no_painel`).
 - [x] Professores usam o painel web (celular e computador), login por e-mail.
 - [x] Regras de avaliação definidas (ver `docs/pedagogico.md`); tudo configurável no painel.
@@ -23,11 +24,9 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 ## 1. Decisões em aberto (bloqueiam itens abaixo)
 
-- [ ] **P0 · Enturmação 2027**: como os alunos entram nas turmas de 2027 (a chamada depende disso).
-      Opções: (a) tela no painel para enturmar; (b) importar matrículas 2027 da Mhund só para enturmar;
-      (c) a partir do sistema de rematrícula da escola.
-- [ ] **P0 · Virada do ano**: em 1º/01/2027 a sincronização passa a usar as matrículas 2027 da Mhund e desativa no
-      app quem não estiver matriculado. Confirmar se a rematrícula estará lançada na Mhund até lá.
+- [x] ~~Enturmação 2027~~: vem das matrículas 2027 da Mhund (decidido em 11/10/2026).
+- [ ] **P0 · Desativar no app quem não rematriculou**: quando? (hoje eles continuam ativos; a lista está em
+      Secretaria → Rematrícula.)
 - [ ] **P1 · Perfis da equipe**: quem é secretaria, coordenação, direção (hoje todo admin vê e edita tudo).
 - [ ] **P2 · Ocorrências disciplinares**: entram no sistema? (a Mhund tem.)
 
@@ -50,8 +49,10 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [x] Cliente da API Integra (chave temporária, paginação, nova tentativa em falha)
 - [x] Sincronização noturna (`POST /api/cron/sincronizar-mhund`): alunos novos, desativação de quem saiu, turma e
       nome do aluno, responsável financeiro (celular e CPF), relatório de celulares inválidos
-- [x] Modos `?simular=1`, `?desde=AAAA-MM-DD`, `?ano=`, `?pedagogico=1` (este último desligado por decisão)
-- [~] Agendamento no n8n às 2h — **tirar `?simular=1`** e confirmar uma noite verde
+- [x] Modos `?simular=1`, `?desde=AAAA-MM-DD`, `?ano=`, `?pedagogico=1`
+- [x] Leitura do banco em páginas (o Supabase corta em 1.000 linhas)
+- [ ] **P0** Simular à noite `?ano=2027&pedagogico=1&simular=1`; se ok, rodar sem `simular`
+- [ ] **P0** Agendamento das 2h no n8n passar a `?ano=2027&pedagogico=1` e confirmar uma noite verde
 - [ ] Desligar o fluxo semanal antigo de alunos/responsáveis no n8n (depois da noite verde)
 - [ ] Secretaria corrigir celular na Mhund: alunos 1155, 2293, 2448, 2654
 - [ ] Desativar o aluno de teste "1" quando os testes acabarem
@@ -81,6 +82,12 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [ ] **P0** Build de produção (aab/ipa) e envio para revisão
 - [ ] P1 Atualização pelo ar (expo-updates) para correções sem nova versão na loja
 
+## 5b. Painel — Secretaria
+
+- [x] Rematrícula 2026 → 2027: rematriculados, não rematriculados (evasão), concluintes, novos; por turma;
+      contato do responsável (WhatsApp) e planilha para a secretaria
+- [x] Turma de conclusão (3º ano do Médio) marcada: quem sai dela se formou, não evadiu
+
 ## 6. Painel — Comunicação
 
 - [x] Publicações: criar, editar, excluir, imagens, categoria, público (todos ou turmas), push
@@ -96,8 +103,8 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [x] Acesso do professor: senha provisória, troca obrigatória no 1º login
 - [x] Modelos de horário (início/fim das aulas) e horário semanal por turma, com aviso de choque de professor
 - [x] Calendário: ano letivo, bimestres, eventos, contagem de dias letivos (200 da LDB), feriados nacionais
-- [ ] **P0** Copiar turmas de um ano para o outro (ex.: 2026 → 2027, com a grade), para não recriar 31 turmas
-- [ ] **P0** Enturmação: alunos em cada turma de 2027, com número de chamada (depende da decisão do item 1)
+- [ ] P1 Copiar turmas de um ano para o outro (para quando a turma não vier da Mhund)
+- [ ] **P0** Atribuir professores às disciplinas das turmas de 2027 (tela pronta; falta a escola definir)
 - [ ] **P0** Virada do ano: inativar as turmas de 2026 no painel e marcar 2027 como ano em uso
 - [ ] P1 Cadastro de aluno pelo painel (aluno que ainda não está na Mhund)
 
@@ -152,4 +159,4 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 ---
 
-Última atualização: 09/10/2026.
+Última atualização: 11/10/2026.

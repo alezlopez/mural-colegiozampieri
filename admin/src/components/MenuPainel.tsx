@@ -13,6 +13,10 @@ const GRUPOS = [
     ],
   },
   {
+    titulo: "Secretaria",
+    itens: [{ href: "/rematricula", rotulo: "Rematrícula" }],
+  },
+  {
     titulo: "Pedagógico",
     itens: [
       { href: "/turmas", rotulo: "Turmas" },
