@@ -108,6 +108,9 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [x] Calendário: ano letivo, bimestres, eventos, contagem de dias letivos (200 da LDB), feriados nacionais
 - [ ] P1 Copiar turmas de um ano para o outro (para quando a turma não vier da Mhund)
 - [x] Ensalamento: colocar alunos (com sugestão dos que estão sem turma), trocar de turma em lote, retirar
+- [x] Matriz curricular por série (disciplinas e aulas/semana), sugerida pela grade do ano anterior e aplicada às
+      turmas da série; Horários mostra aulas colocadas/previstas
+- [ ] **P0** Revisar e salvar a matriz de cada série de 2027 (13 séries) e preencher as aulas por semana
 - [ ] **P0** Atribuir professores às disciplinas das turmas de 2027 (tela pronta; falta a escola definir)
 - [ ] P1 Renumerar a chamada (ordem alfabética) depois do ensalamento
 - [ ] **P0** Virada do ano: inativar as turmas de 2026 no painel e marcar 2027 como ano em uso

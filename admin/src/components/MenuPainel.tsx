@@ -19,6 +19,7 @@ const GRUPOS = [
   {
     titulo: "Pedagógico",
     itens: [
+      { href: "/matriz", rotulo: "Matriz curricular" },
       { href: "/turmas", rotulo: "Turmas" },
       { href: "/disciplinas", rotulo: "Disciplinas" },
       { href: "/professores", rotulo: "Professores" },

@@ -5,7 +5,7 @@ import { conflitosDeProfessor, DIAS_SEMANA, hhmm, minutos, type AulaModelo, type
 import { Avisos } from "@/components/Avisos";
 import { salvarHorario, trocarModeloDaTurma } from "./actions";
 
-type Turma = { id: number; nome: string; ano: number; segmento: string; modelo_horario_id: number | null };
+type Turma = { id: number; nome: string; ano: number; segmento: string; serie: string | null; modelo_horario_id: number | null };
 type Vinculo = {
   turma_id: number;
   disciplina_id: number;
@@ -26,7 +26,7 @@ export default async function PaginaHorarios({ searchParams }: PageProps<"/horar
 
   const { data: todasTurmas } = await supabase
     .from("turmas")
-    .select("id,nome,ano,segmento,modelo_horario_id")
+    .select("id,nome,ano,segmento,serie,modelo_horario_id")
     .eq("ativa", true)
     .order("nome")
     .overrideTypes<Turma[], { merge: false }>();
@@ -142,6 +142,17 @@ export default async function PaginaHorarios({ searchParams }: PageProps<"/horar
   const conflitosDaTurma = conflitos.filter((c) => c.a.turma_id === turma.id || c.b.turma_id === turma.id);
   const contagem = new Map<number, number>();
   for (const s of slotsDaTurma) contagem.set(s.disciplina_id, (contagem.get(s.disciplina_id) ?? 0) + 1);
+  // Previsto na matriz curricular da série (quando há): mostra colocadas/previstas.
+  const { data: matriz } = turma.serie
+    ? await supabase
+        .from("matriz_curricular")
+        .select("disciplina_id,aulas_semanais")
+        .eq("ano", turma.ano)
+        .eq("segmento", turma.segmento)
+        .eq("serie", turma.serie)
+    : { data: [] };
+  const previsto = new Map((matriz ?? []).filter((m) => m.aulas_semanais).map((m) => [m.disciplina_id as number, m.aulas_semanais as number]));
+  for (const d of previsto.keys()) if (!contagem.has(d)) contagem.set(d, 0);
 
   return (
     <div>
@@ -261,15 +272,23 @@ export default async function PaginaHorarios({ searchParams }: PageProps<"/horar
 
       {contagem.size > 0 && (
         <section className="mt-8">
-          <h2 className="rotulo">Aulas por semana</h2>
+          <h2 className="rotulo">Aulas por semana{previsto.size > 0 ? " (colocadas / previstas na matriz)" : ""}</h2>
           <ul className="flex flex-wrap gap-2">
             {[...contagem]
               .sort((a, b) => b[1] - a[1])
-              .map(([id, n]) => (
-                <li key={id} className="rounded-full border border-borda bg-white px-3 py-1 text-xs text-texto">
-                  {nomeDisciplina.get(id) ?? "?"} <strong className="text-verde-escuro">{n}</strong>
-                </li>
-              ))}
+              .map(([id, n]) => {
+                const meta = previsto.get(id);
+                const cor = meta === undefined ? "text-verde-escuro" : n === meta ? "text-verde-claro" : "text-vinho";
+                return (
+                  <li key={id} className="rounded-full border border-borda bg-white px-3 py-1 text-xs text-texto">
+                    {nomeDisciplina.get(id) ?? "?"}{" "}
+                    <strong className={cor}>
+                      {n}
+                      {meta !== undefined ? `/${meta}` : ""}
+                    </strong>
+                  </li>
+                );
+              })}
           </ul>
         </section>
       )}
