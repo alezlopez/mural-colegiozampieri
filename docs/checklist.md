@@ -54,7 +54,7 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [x] Leitura do banco em páginas (o Supabase corta em 1.000 linhas)
 - [x] Padrão: turmas + matrículas + alunos + responsáveis; `?grade=1` também disciplinas/professores/grade
 - [x] Aluno trocado de turma na Mhund não fica em duas turmas; ensalados no painel são respeitados
-- [ ] **P0** Simular à noite `?ano=2027&simular=1`; se ok, rodar sem `simular`
+- [x] Carga de 2027 feita (11/10/2026): 32 turmas, 513 alunos cursando (495 rematriculados, 18 novos)
 - [ ] **P0** Agendamento das 2h no n8n passar a `?ano=2027` (ou variável `ANO_LETIVO_SINCRONIZACAO=2027`)
 - [ ] Desligar o fluxo semanal antigo de alunos/responsáveis no n8n (depois da noite verde)
 - [ ] Secretaria corrigir celular na Mhund: alunos 1155, 2293, 2448, 2654
