@@ -12,9 +12,10 @@ Objetivo final: **sair da Mhund** (R$ 1.700/mês). Começa pelo pedagógico, em 
 
 O banco já nasce independente: ids próprios, e a Mhund aparece só como referência (`mhund_id`).
 
-> **Decisão (11/10/2026):** o sistema já trabalha com **2027**. A sincronização roda com `?ano=2027&pedagogico=1`:
-> turmas, alunos e matrículas de 2027 vêm da Mhund (já cadastrados lá); professores são atribuídos no painel. A base
-> de 2026 fica como referência (relatório de rematrícula). Lista do que falta: `docs/checklist.md`.
+> **Decisão (11/10/2026):** o sistema já trabalha com **2027** e nada de 2026 é sincronizado. A sincronização roda
+> com `?ano=2027`: turmas, alunos, matrículas e responsável financeiro de 2027 vêm da Mhund; o ensalamento pode ser
+> ajustado no painel (vale mais que a Mhund); professores e grade são definidos no painel (`?grade=1` traria os da
+> Mhund). A base de 2026 fica como referência (relatório de rematrícula). O que falta: `docs/checklist.md`.
 
 ## Princípios
 

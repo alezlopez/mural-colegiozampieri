@@ -13,8 +13,9 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 - [x] O sistema já trabalha com **2027** (o app não será usado em 2026). A base de 2026 (alunos, turmas,
       matrículas) fica como referência para a rematrícula.
-- [x] Da Mhund vêm **turmas, alunos e matrículas de 2027** (já cadastrados lá) e o responsável financeiro.
-      Professores de 2027 são atribuídos **no painel** (ainda não definidos).
+- [x] **Nada mais de 2026 é sincronizado.** Da Mhund vêm só dados de **2027**: turmas, alunos, matrículas
+      (ensalamento) e responsável financeiro. Professores e grade de 2027 são definidos **no painel**.
+- [x] Ensalamento manual no painel vale mais que a Mhund (troca de turma não é desfeita).
 - [x] O que é editado no painel vale mais que a Mhund (`editado_no_painel`).
 - [x] Professores usam o painel web (celular e computador), login por e-mail.
 - [x] Regras de avaliação definidas (ver `docs/pedagogico.md`); tudo configurável no painel.
@@ -51,8 +52,10 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
       nome do aluno, responsável financeiro (celular e CPF), relatório de celulares inválidos
 - [x] Modos `?simular=1`, `?desde=AAAA-MM-DD`, `?ano=`, `?pedagogico=1`
 - [x] Leitura do banco em páginas (o Supabase corta em 1.000 linhas)
-- [ ] **P0** Simular à noite `?ano=2027&pedagogico=1&simular=1`; se ok, rodar sem `simular`
-- [ ] **P0** Agendamento das 2h no n8n passar a `?ano=2027&pedagogico=1` e confirmar uma noite verde
+- [x] Padrão: turmas + matrículas + alunos + responsáveis; `?grade=1` também disciplinas/professores/grade
+- [x] Aluno trocado de turma na Mhund não fica em duas turmas; ensalados no painel são respeitados
+- [ ] **P0** Simular à noite `?ano=2027&simular=1`; se ok, rodar sem `simular`
+- [ ] **P0** Agendamento das 2h no n8n passar a `?ano=2027` (ou variável `ANO_LETIVO_SINCRONIZACAO=2027`)
 - [ ] Desligar o fluxo semanal antigo de alunos/responsáveis no n8n (depois da noite verde)
 - [ ] Secretaria corrigir celular na Mhund: alunos 1155, 2293, 2448, 2654
 - [ ] Desativar o aluno de teste "1" quando os testes acabarem
@@ -104,7 +107,9 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [x] Modelos de horário (início/fim das aulas) e horário semanal por turma, com aviso de choque de professor
 - [x] Calendário: ano letivo, bimestres, eventos, contagem de dias letivos (200 da LDB), feriados nacionais
 - [ ] P1 Copiar turmas de um ano para o outro (para quando a turma não vier da Mhund)
+- [x] Ensalamento: colocar alunos (com sugestão dos que estão sem turma), trocar de turma em lote, retirar
 - [ ] **P0** Atribuir professores às disciplinas das turmas de 2027 (tela pronta; falta a escola definir)
+- [ ] P1 Renumerar a chamada (ordem alfabética) depois do ensalamento
 - [ ] **P0** Virada do ano: inativar as turmas de 2026 no painel e marcar 2027 como ano em uso
 - [ ] P1 Cadastro de aluno pelo painel (aluno que ainda não está na Mhund)
 

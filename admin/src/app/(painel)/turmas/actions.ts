@@ -161,3 +161,136 @@ export async function adicionarDisciplina(formData: FormData) {
   revalidatePath("/", "layout");
   voltar(caminho, "salvo", "Disciplina adicionada à turma.");
 }
+
+// ---------------------------------------------------------------------------
+// Ensalamento manual. Matrícula mexida aqui fica com editado_no_painel: a sincronização não muda a turma do aluno
+// nesse ano. A turma do aluno no app (alunos.turma) acompanha.
+// ---------------------------------------------------------------------------
+
+type Matricula = { aluno_codigo: string; turma_id: number; ativa: boolean };
+
+async function matriculasDoAno(supabase: Cliente, ano: number, alunos: string[]) {
+  const { data } = await supabase
+    .from("matriculas")
+    .select("aluno_codigo,turma_id,ativa")
+    .eq("ano", ano)
+    .in("aluno_codigo", alunos)
+    .overrideTypes<Matricula[], { merge: false }>();
+  return data ?? [];
+}
+
+/** Põe cada aluno na turma de destino (do mesmo ano) e desativa as outras matrículas dele nesse ano. */
+async function ensalar(supabase: Cliente, alunos: string[], destino: { id: number; ano: number; nome: string }) {
+  const existentes = await matriculasDoAno(supabase, destino.ano, alunos);
+  for (const codigo of alunos) {
+    const doAluno = existentes.filter((m) => m.aluno_codigo === codigo);
+    for (const m of doAluno.filter((x) => x.turma_id !== destino.id && x.ativa)) {
+      const { error } = await supabase
+        .from("matriculas")
+        .update({ ativa: false, editado_no_painel: true })
+        .eq("aluno_codigo", codigo)
+        .eq("turma_id", m.turma_id);
+      if (error) return error;
+    }
+    const { error } = doAluno.some((m) => m.turma_id === destino.id)
+      ? await supabase
+          .from("matriculas")
+          .update({ ativa: true, situacao: "L", editado_no_painel: true })
+          .eq("aluno_codigo", codigo)
+          .eq("turma_id", destino.id)
+      : await supabase.from("matriculas").insert({
+          aluno_codigo: codigo,
+          turma_id: destino.id,
+          ano: destino.ano,
+          situacao: "L",
+          ativa: true,
+          numero_chamada: null,
+          editado_no_painel: true,
+        });
+    if (error) return error;
+  }
+  const { error } = await supabase.from("alunos").update({ turma: destino.nome, ativo: true }).in("codigo", alunos);
+  return error;
+}
+
+const codigosDoForm = (formData: FormData) =>
+  [...new Set(formData.getAll("aluno").map((v) => String(v).trim()))].filter((c) => /^[\w.-]{1,40}$/.test(c));
+
+export async function moverAlunos(formData: FormData) {
+  const { supabase } = await exigirAdmin();
+  const origem = Number(formData.get("turma_id"));
+  const destinoId = Number(formData.get("destino_id"));
+  if (!Number.isInteger(origem)) redirect("/turmas");
+  const caminho = `/turmas/${origem}`;
+  const alunos = codigosDoForm(formData);
+  if (alunos.length === 0) voltar(caminho, "erro", "Marque os alunos que vão trocar de turma.");
+  if (!Number.isInteger(destinoId) || destinoId === origem) voltar(caminho, "erro", "Escolha a turma de destino.");
+
+  const { data: turmas } = await supabase.from("turmas").select("id,ano,nome").in("id", [origem, destinoId]);
+  const destino = turmas?.find((t) => t.id === destinoId);
+  const daOrigem = turmas?.find((t) => t.id === origem);
+  if (!destino || !daOrigem) voltar(caminho, "erro", "Turma não encontrada.");
+  if (destino.ano !== daOrigem.ano) voltar(caminho, "erro", "A troca é só entre turmas do mesmo ano letivo.");
+
+  const error = await ensalar(supabase, alunos, destino);
+  if (error) {
+    console.error("[ensalamento] mover", error);
+    voltar(caminho, "erro", "Não foi possível trocar os alunos de turma.");
+  }
+  revalidatePath("/", "layout");
+  voltar(caminho, "salvo", `${alunos.length} aluno(s) passaram para ${destino.nome}.`);
+}
+
+export async function adicionarAlunos(formData: FormData) {
+  const { supabase } = await exigirAdmin();
+  const turmaId = Number(formData.get("turma_id"));
+  if (!Number.isInteger(turmaId)) redirect("/turmas");
+  const caminho = `/turmas/${turmaId}`;
+  // Aceita "1234 — Nome do aluno" (vindo da lista de sugestões) ou só o código.
+  const alunos = [
+    ...new Set(
+      String(formData.get("alunos") ?? "")
+        .split(/[\n,;]+/)
+        .map((t) => t.split("—")[0].trim())
+        .filter((c) => /^[\w.-]{1,40}$/.test(c)),
+    ),
+  ];
+  if (alunos.length === 0) voltar(caminho, "erro", "Informe o código do aluno (ou escolha na lista).");
+
+  const { data: turma } = await supabase.from("turmas").select("id,ano,nome").eq("id", turmaId).maybeSingle();
+  if (!turma) voltar("/turmas", "erro", "Turma não encontrada.");
+  const { data: existem } = await supabase.from("alunos").select("codigo").in("codigo", alunos);
+  const validos = (existem ?? []).map((a) => a.codigo as string);
+  const invalidos = alunos.filter((c) => !validos.includes(c));
+  if (validos.length === 0) voltar(caminho, "erro", `Aluno não encontrado: ${invalidos.join(", ")}.`);
+
+  const error = await ensalar(supabase, validos, turma);
+  if (error) {
+    console.error("[ensalamento] adicionar", error);
+    voltar(caminho, "erro", "Não foi possível colocar os alunos na turma.");
+  }
+  revalidatePath("/", "layout");
+  voltar(
+    caminho,
+    "salvo",
+    `${validos.length} aluno(s) na turma.${invalidos.length ? ` Não encontrados: ${invalidos.join(", ")}.` : ""}`,
+  );
+}
+
+/** Tira os alunos da turma (a matrícula fica como histórico, inativa). Eles continuam ativos no app. */
+export async function retirarAlunos(formData: FormData) {
+  const { supabase } = await exigirAdmin();
+  const turmaId = Number(formData.get("turma_id"));
+  if (!Number.isInteger(turmaId)) redirect("/turmas");
+  const caminho = `/turmas/${turmaId}`;
+  const alunos = codigosDoForm(formData);
+  if (alunos.length === 0) voltar(caminho, "erro", "Marque os alunos que vão sair da turma.");
+  const { error } = await supabase
+    .from("matriculas")
+    .update({ ativa: false, editado_no_painel: true })
+    .eq("turma_id", turmaId)
+    .in("aluno_codigo", alunos);
+  if (error) voltar(caminho, "erro", "Não foi possível retirar os alunos.");
+  revalidatePath("/", "layout");
+  voltar(caminho, "salvo", `${alunos.length} aluno(s) retirado(s) da turma.`);
+}

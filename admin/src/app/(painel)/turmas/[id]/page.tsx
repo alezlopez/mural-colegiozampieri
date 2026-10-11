@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avisos } from "@/components/Avisos";
 import { exigirAdmin } from "@/lib/auth";
-import { adicionarDisciplina, alternarTurma, excluirTurma, salvarGrade, salvarTurma } from "../actions";
+import { lerTudo } from "@/lib/ler-tudo";
+import { adicionarAlunos, adicionarDisciplina, alternarTurma, excluirTurma, moverAlunos, retirarAlunos, salvarGrade, salvarTurma } from "../actions";
 import { CamposTurma } from "../CamposTurma";
 
+type Matriculado = { aluno_codigo: string; numero_chamada: number | null; editado_no_painel: boolean; alunos: { nome: string } | null };
 type Vinculo = { disciplina_id: number; professor_id: number | null; editado_no_painel: boolean; disciplinas: { nome: string } | null };
 
 export default async function PaginaTurma({ params, searchParams }: PageProps<"/turmas/[id]">) {
@@ -29,6 +31,28 @@ export default async function PaginaTurma({ params, searchParams }: PageProps<"/
       supabase.from("aulas").select("id", { count: "exact", head: true }).eq("turma_id", id),
     ]);
   if (!turma) notFound();
+
+  // Ensalamento: alunos da turma, outras turmas do ano (destino da troca) e alunos ativos ainda sem turma no ano.
+  const [{ data: matriculados }, { data: outrasTurmas }, alunosAtivos, comTurmaNoAno] = await Promise.all([
+    supabase
+      .from("matriculas")
+      .select("aluno_codigo,numero_chamada,editado_no_painel,alunos(nome)")
+      .eq("turma_id", id)
+      .eq("ativa", true)
+      .overrideTypes<Matriculado[], { merge: false }>(),
+    supabase.from("turmas").select("id,nome").eq("ano", turma.ano).eq("ativa", true).neq("id", id).order("nome"),
+    lerTudo<{ codigo: string; nome: string; turma: string }>((de, ate) =>
+      supabase.from("alunos").select("codigo,nome,turma").eq("ativo", true).order("nome").range(de, ate),
+    ),
+    lerTudo<{ aluno_codigo: string }>((de, ate) =>
+      supabase.from("matriculas").select("aluno_codigo").eq("ano", turma.ano).eq("ativa", true).order("aluno_codigo").range(de, ate),
+    ),
+  ]);
+  const alunosDaTurma = (matriculados ?? [])
+    .map((m) => ({ codigo: m.aluno_codigo, nome: m.alunos?.nome ?? `Aluno ${m.aluno_codigo}`, numero: m.numero_chamada, painel: m.editado_no_painel }))
+    .sort((a, b) => (a.numero ?? 999) - (b.numero ?? 999) || a.nome.localeCompare(b.nome, "pt-BR"));
+  const jaEnsalados = new Set(comTurmaNoAno.map((m) => m.aluno_codigo));
+  const semTurma = alunosAtivos.filter((a) => !jaEnsalados.has(a.codigo));
 
   const vinculos = (vinculosBrutos ?? []).sort((a, b) => (a.disciplinas?.nome ?? "").localeCompare(b.disciplinas?.nome ?? ""));
   const naGrade = new Set(vinculos.map((v) => v.disciplina_id));
@@ -65,6 +89,76 @@ export default async function PaginaTurma({ params, searchParams }: PageProps<"/
               </Link>
             </div>
           </form>
+        </section>
+
+        <section className="rounded-xl border border-borda bg-white p-4">
+          <h2 className="font-titulo text-xl text-verde-escuro">Alunos ({alunosDaTurma.length})</h2>
+          <p className="mt-1 text-xs text-texto-suave">
+            Vêm das matrículas da Mhund. Aluno colocado, trocado ou retirado aqui fica como você deixou: a sincronização
+            não muda mais a turma dele em {turma.ano}.
+          </p>
+
+          {alunosDaTurma.length > 0 && (
+            <form className="mt-3">
+              <input type="hidden" name="turma_id" value={turma.id} />
+              <ul className="max-h-[28rem] divide-y divide-borda overflow-y-auto rounded-md border border-borda">
+                {alunosDaTurma.map((a) => (
+                  <li key={a.codigo}>
+                    <label className="flex items-center gap-3 px-3 py-1.5 text-sm hover:bg-creme">
+                      <input type="checkbox" name="aluno" value={a.codigo} />
+                      <span className="w-6 text-right text-xs text-texto-suave">{a.numero ?? "–"}</span>
+                      <span className="min-w-0 flex-1 truncate">{a.nome}</span>
+                      <span className="text-[11px] text-texto-suave">
+                        {a.codigo}
+                        {a.painel ? " · painel" : ""}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 flex flex-wrap items-end gap-2">
+                <label className="min-w-56 flex-1">
+                  <span className="rotulo">Trocar os marcados para</span>
+                  <select name="destino_id" defaultValue="" className="campo">
+                    <option value="" disabled>
+                      Escolha a turma…
+                    </option>
+                    {(outrasTurmas ?? []).map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.nome}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button formAction={moverAlunos} className="botao-primario">
+                  Trocar de turma
+                </button>
+                <button formAction={retirarAlunos} className="botao-secundario">
+                  Retirar da turma
+                </button>
+              </div>
+            </form>
+          )}
+
+          <form action={adicionarAlunos} className="mt-4 flex flex-wrap items-end gap-2 border-t border-borda pt-4">
+            <input type="hidden" name="turma_id" value={turma.id} />
+            <label className="min-w-64 flex-1">
+              <span className="rotulo">Colocar aluno nesta turma</span>
+              <input name="alunos" list="alunos-sem-turma" placeholder="Digite o nome ou o código" className="campo" autoComplete="off" />
+              <datalist id="alunos-sem-turma">
+                {semTurma.map((a) => (
+                  <option key={a.codigo} value={`${a.codigo} — ${a.nome}`}>
+                    {a.turma}
+                  </option>
+                ))}
+              </datalist>
+            </label>
+            <button className="botao-secundario">Colocar</button>
+          </form>
+          <p className="mt-1 text-xs text-texto-suave">
+            A lista sugere os {semTurma.length} alunos ativos ainda sem turma em {turma.ano}. Para vários de uma vez,
+            digite os códigos separados por vírgula. Aluno que já está em outra turma é trocado para esta.
+          </p>
         </section>
 
         <section className="rounded-xl border border-borda bg-white p-4">

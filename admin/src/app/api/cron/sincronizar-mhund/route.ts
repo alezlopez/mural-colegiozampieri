@@ -4,8 +4,9 @@ import { criarClienteServico } from "@/lib/supabase/servico";
 // Chamado pelo n8n (agendado, 1x por dia) com Authorization: Bearer <CRON_SECRET>.
 // ?simular=1 só calcula e devolve o que mudaria, sem gravar. ?ano=2027 sincroniza outro ano letivo.
 // ?desde=AAAA-MM-DD sincroniza só o que mudou desde a data (de dia, a Mhund aceita no máximo 30 dias).
-// Por padrão grava só alunos e responsável financeiro; ?pedagogico=1 também turmas, disciplinas, professores, grade e
-// matrículas (desligado: o pedagógico de 2027 é montado no painel).
+// Grava turmas, matrículas (ensalamento), alunos e responsável financeiro do ano. ?grade=1 também disciplinas,
+// professores e grade (desligado: os professores de 2027 são atribuídos no painel).
+// O ano vem de ?ano= ou de ANO_LETIVO_SINCRONIZACAO (padrão: ano corrente). Hoje: 2027.
 // Sem "desde": coleta completa, que a Mhund só libera entre 18h e 8h (agendar de madrugada).
 export const maxDuration = 300;
 
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
     return new Response("Não autorizado", { status: 401 });
   }
   const url = new URL(request.url);
-  const ano = Number(url.searchParams.get("ano") ?? new Date().getFullYear());
+  const ano = Number(url.searchParams.get("ano") ?? process.env.ANO_LETIVO_SINCRONIZACAO ?? new Date().getFullYear());
   if (!Number.isInteger(ano) || ano < 2020 || ano > 2100) return Response.json({ erro: "Ano inválido." }, { status: 400 });
 
   try {
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
     if (desdeBruto && !/^\d{4}-\d{2}-\d{2}$/.test(desdeBruto)) return Response.json({ erro: "Data inválida." }, { status: 400 });
     const resumo = await sincronizarMhund(criarClienteServico(), ano, {
       simular: url.searchParams.get("simular") === "1",
-      pedagogico: url.searchParams.get("pedagogico") === "1",
+      grade: url.searchParams.get("grade") === "1",
       ...(desdeBruto ? { desde: `${desdeBruto}T00:00:00` } : {}),
     });
     return Response.json(resumo);
