@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { router } from 'expo-router';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Botao, Campo, MensagemErro } from '@/components/Formulario';
-import { enviarCodigo, solicitarAcesso } from '@/lib/api';
+import { enderecoPrivacidade, enviarCodigo, solicitarAcesso } from '@/lib/api';
 import { mascararTelefone } from '@/lib/telefone';
 import { cores, fontes } from '@/lib/theme';
 
@@ -68,12 +68,21 @@ export default function Entrar() {
 
         <MensagemErro texto={erro} />
         <Botao titulo="Receber código no WhatsApp" onPress={continuar} carregando={enviando} desativado={!valido} />
+        <Text style={styles.privacidade}>
+          Ao entrar, você concorda com a{' '}
+          <Text style={styles.privacidadeLink} onPress={() => void Linking.openURL(enderecoPrivacidade())} accessibilityRole="link">
+            política de privacidade
+          </Text>
+          .
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  privacidade: { fontFamily: fontes.corpo, fontSize: 12, lineHeight: 18, color: cores.textoSuave, textAlign: 'center' },
+  privacidadeLink: { fontFamily: fontes.corpoNegrito, color: cores.verdeClaro, textDecorationLine: 'underline' },
   conteudo: { padding: 24, gap: 20 },
   sobretitulo: { fontFamily: fontes.corpoNegrito, fontSize: 11, letterSpacing: 2.4, color: cores.dourado },
   titulo: { fontFamily: fontes.titulo, fontSize: 28, lineHeight: 34, color: cores.verdeEscuro },

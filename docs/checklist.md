@@ -77,7 +77,10 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [ ] Testar com dados reais (depende de aulas lançadas em 2027)
 - [ ] **P1** Notas e boletim
 - [ ] **P1** Horário semanal da turma do filho
-- [ ] **P0** Política de privacidade (exigida pelas lojas) e exclusão de conta no app (exigência da Apple)
+- [x] Política de privacidade pública (`/privacidade` no painel; encarregado: secretaria@colegiozampieri.com.br),
+      link na tela de entrada e na aba Família
+- [x] Exclusão de conta pelo app (Família → Excluir minha conta): apaga login e notificações; registros escolares ficam
+- [ ] Revisão da política por advogado (o texto descreve o que o app faz; as bases legais são uma leitura técnica)
 
 ## 5. Lojas
 

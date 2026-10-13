@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { router } from 'expo-router';
-import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Botao, MensagemErro } from '@/components/Formulario';
 import { PrecisaEntrar } from '@/components/PrecisaEntrar';
+import { enderecoPrivacidade, excluirConta } from '@/lib/api';
 import { useFilhos } from '@/lib/filhos';
+import { supabase } from '@/lib/supabase';
 import { useSessao } from '@/lib/sessao';
 import { exibirTelefone } from '@/lib/telefone';
 import { cores, fontes } from '@/lib/theme';
@@ -10,6 +13,8 @@ import { cores, fontes } from '@/lib/theme';
 export default function Familia() {
   const { usuarioId, telefone, biometria, definirBiometria, sair } = useSessao();
   const { filhos, erro } = useFilhos();
+  const [excluindo, setExcluindo] = useState(false);
+  const [erroExclusao, setErroExclusao] = useState<string | null>(null);
 
   if (!usuarioId) {
     return <PrecisaEntrar titulo="Minha família" texto="Entre com o código do aluno ou o CPF do responsável financeiro e o celular cadastrado na secretaria." />;
@@ -28,6 +33,37 @@ export default function Familia() {
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Sair', style: 'destructive', onPress: executar },
     ]);
+  }
+
+  // Exigência das lojas: o responsável exclui a própria conta pelo app.
+  function confirmarExclusao() {
+    const executar = async () => {
+      setExcluindo(true);
+      setErroExclusao(null);
+      try {
+        await excluirConta();
+        await supabase.auth.signOut({ scope: 'local' });
+        await sair();
+        router.replace('/');
+        if (Platform.OS !== 'web') Alert.alert('Conta excluída', 'Seu acesso e as notificações deste celular foram removidos.');
+      } catch (e) {
+        setErroExclusao(e instanceof Error ? e.message : 'Não foi possível excluir a conta.');
+      } finally {
+        setExcluindo(false);
+      }
+    };
+    if (Platform.OS === 'web') {
+      void executar();
+      return;
+    }
+    Alert.alert(
+      'Excluir sua conta?',
+      'Apagamos o seu acesso ao app e as notificações deste celular. Os registros escolares dos alunos continuam com a escola, como exige a lei. Se quiser voltar, basta entrar de novo com o código pelo WhatsApp.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir conta', style: 'destructive', onPress: () => void executar() },
+      ],
+    );
   }
 
   return (
@@ -95,6 +131,17 @@ export default function Familia() {
       )}
 
       <Botao titulo="Sair da conta" onPress={confirmarSaida} variante="secundario" />
+
+      <View style={styles.privacidade}>
+        <Text style={styles.opcaoTitulo}>Privacidade</Text>
+        <Pressable onPress={() => void Linking.openURL(enderecoPrivacidade())} accessibilityRole="link" hitSlop={6}>
+          <Text style={styles.link}>Política de privacidade ›</Text>
+        </Pressable>
+        <MensagemErro texto={erroExclusao} />
+        <Pressable onPress={confirmarExclusao} disabled={excluindo} accessibilityRole="button" hitSlop={6}>
+          <Text style={styles.excluir}>{excluindo ? 'Excluindo…' : 'Excluir minha conta'}</Text>
+        </Pressable>
+      </View>
     </ScrollView>
   );
 }
@@ -126,6 +173,8 @@ const styles = StyleSheet.create({
   nome: { fontFamily: fontes.titulo, fontSize: 18, color: cores.verdeEscuro },
   link: { fontFamily: fontes.corpoNegrito, fontSize: 13, color: cores.verdeClaro },
   acoes: { flexDirection: 'row', gap: 18, marginTop: 6 },
+  privacidade: { gap: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: cores.borda },
+  excluir: { fontFamily: fontes.corpoNegrito, fontSize: 13, color: cores.vinho },
   detalhe: { fontFamily: fontes.corpo, fontSize: 13, color: cores.textoSuave, marginTop: 2 },
   nota: {
     fontFamily: fontes.corpo,

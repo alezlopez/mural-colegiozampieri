@@ -192,3 +192,21 @@ export async function confirmarCodigo(telefone: string, codigo: string) {
 export function urlImagem(storagePath: string) {
   return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_IMAGENS}/${storagePath}`;
 }
+
+/** Página pública da política de privacidade (no painel da escola). */
+export function enderecoPrivacidade() {
+  return `${API_URL}/privacidade`;
+}
+
+/** Exclui a conta do responsável (login e notificações). Os registros escolares do aluno ficam com a escola. */
+export async function excluirConta() {
+  if (!API_URL) throw new Error('Configure EXPO_PUBLIC_API_URL no arquivo .env');
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Sessão expirada. Entre de novo e tente outra vez.');
+  const resp = await fetch(`${API_URL}/api/conta/excluir`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+  if (!resp.ok) {
+    const corpo = (await resp.json().catch(() => ({}))) as { erro?: string };
+    throw new Error(corpo.erro ?? 'Não foi possível excluir a conta agora.');
+  }
+}
