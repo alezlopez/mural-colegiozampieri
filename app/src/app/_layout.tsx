@@ -91,13 +91,13 @@ function Navegacao() {
           contentStyle: { backgroundColor: cores.brancoQuente },
         }}
       >
-        <Stack.Screen name="index" options={{ headerShown: false, title: 'Mural' }} />
+        <Stack.Screen name="(abas)" options={{ headerShown: false, title: 'Mural' }} />
         <Stack.Screen name="post/[id]" options={{ title: '', headerBackTitle: 'Mural' }} />
         <Stack.Screen name="entrar" options={{ title: 'Entrar', headerBackTitle: 'Mural' }} />
         <Stack.Screen name="verificar" options={{ title: 'Confirmação' }} />
         <Stack.Screen name="biometria" options={{ title: '', headerBackVisible: false, gestureEnabled: false }} />
-        <Stack.Screen name="familia" options={{ title: 'Minha família', headerBackTitle: 'Mural' }} />
-        <Stack.Screen name="carteirinha/[codigo]" options={{ title: 'Carteirinha', headerBackTitle: 'Família' }} />
+        <Stack.Screen name="frequencia/[codigo]" options={{ title: 'Frequência', headerBackTitle: 'Voltar' }} />
+        <Stack.Screen name="carteirinha/[codigo]" options={{ title: 'Carteirinha', headerBackTitle: 'Voltar' }} />
       </Stack>
       {bloqueado && <TelaBloqueio />}
     </>

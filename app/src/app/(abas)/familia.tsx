@@ -1,34 +1,24 @@
-import { useEffect, useState } from 'react';
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Botao, MensagemErro } from '@/components/Formulario';
-import { listarFilhos, type Aluno } from '@/lib/api';
+import { PrecisaEntrar } from '@/components/PrecisaEntrar';
+import { useFilhos } from '@/lib/filhos';
 import { useSessao } from '@/lib/sessao';
 import { exibirTelefone } from '@/lib/telefone';
 import { cores, fontes } from '@/lib/theme';
 
 export default function Familia() {
-  const { pronto, usuarioId, telefone, biometria, definirBiometria, sair } = useSessao();
-  const [filhos, setFilhos] = useState<Aluno[] | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const { usuarioId, telefone, biometria, definirBiometria, sair } = useSessao();
+  const { filhos, erro } = useFilhos();
 
-  useEffect(() => {
-    if (!usuarioId) return;
-    let ativo = true;
-    listarFilhos()
-      .then((f) => ativo && setFilhos(f))
-      .catch((e: Error) => ativo && setErro(e.message));
-    return () => {
-      ativo = false;
-    };
-  }, [usuarioId]);
-
-  if (pronto && !usuarioId) return <Redirect href="/entrar" />;
+  if (!usuarioId) {
+    return <PrecisaEntrar titulo="Minha família" texto="Entre com o código do aluno ou o CPF do responsável financeiro e o celular cadastrado na secretaria." />;
+  }
 
   function confirmarSaida() {
     const executar = async () => {
       await sair();
-      router.dismissAll();
+      router.replace('/');
     };
     if (Platform.OS === 'web') {
       executar();
@@ -54,24 +44,33 @@ export default function Familia() {
         <Text style={styles.texto}>Nenhum aluno ativo vinculado a este telefone. Procure a secretaria.</Text>
       )}
       {filhos?.map((a) => (
-        <Pressable
-          key={a.codigo}
-          style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.7 }]}
-          onPress={() => router.push({ pathname: '/carteirinha/[codigo]', params: { codigo: a.codigo } })}
-          accessibilityRole="button"
-          accessibilityHint="Abre a carteirinha digital do aluno"
-        >
+        <View key={a.codigo} style={styles.cartao}>
           <View style={styles.inicial}>
             <Text style={styles.inicialTexto}>{a.nome.trim().charAt(0).toUpperCase()}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.nome}>{a.nome}</Text>
             <Text style={styles.detalhe}>
-              Turma {a.turma} · código {a.codigo}
+              {a.turmaAtual?.nome ?? a.turma} · código {a.codigo}
             </Text>
-            <Text style={styles.link}>Ver carteirinha ›</Text>
+            <View style={styles.acoes}>
+              <Pressable
+                onPress={() => router.push({ pathname: '/carteirinha/[codigo]', params: { codigo: a.codigo } })}
+                accessibilityRole="button"
+                hitSlop={6}
+              >
+                <Text style={styles.link}>Carteirinha ›</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => router.push({ pathname: '/frequencia/[codigo]', params: { codigo: a.codigo } })}
+                accessibilityRole="button"
+                hitSlop={6}
+              >
+                <Text style={styles.link}>Frequência ›</Text>
+              </Pressable>
+            </View>
           </View>
-        </Pressable>
+        </View>
       ))}
 
       <Text style={styles.nota}>
@@ -125,7 +124,8 @@ const styles = StyleSheet.create({
   },
   inicialTexto: { fontFamily: fontes.titulo, fontSize: 20, color: cores.douradoClaro },
   nome: { fontFamily: fontes.titulo, fontSize: 18, color: cores.verdeEscuro },
-  link: { fontFamily: fontes.corpoNegrito, fontSize: 13, color: cores.verdeClaro, marginTop: 4 },
+  link: { fontFamily: fontes.corpoNegrito, fontSize: 13, color: cores.verdeClaro },
+  acoes: { flexDirection: 'row', gap: 18, marginTop: 6 },
   detalhe: { fontFamily: fontes.corpo, fontSize: 13, color: cores.textoSuave, marginTop: 2 },
   nota: {
     fontFamily: fontes.corpo,

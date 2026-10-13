@@ -69,10 +69,12 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [x] Depois do login vai para o mural, com "Sua família" no topo
 - [x] Carteirinha digital: QR que muda a cada 20 s, validação pública, foto do aluno
 - [x] Envio da foto pelo app (câmera/galeria) com aprovação no painel e aviso por push
-- [ ] **P0** Abas fixas (Mural · Hoje · Calendário · Família)
-- [ ] **P0** "Hoje na escola": conteúdo e tarefa de cada aula do dia do filho
-- [ ] **P0** Calendário escolar (eventos públicos da turma/escola)
-- [ ] **P0** Frequência do filho (faltas por disciplina, % e alerta abaixo de 75%)
+- [x] Abas fixas (Mural · Hoje · Calendário · Família), com seletor de filho para quem tem mais de um
+- [x] "Hoje na escola": conteúdo, tarefa e presença do filho em cada aula do dia; navegação entre dias; avisos do
+      calendário; tarefas para entregar
+- [x] Calendário escolar (eventos públicos da escola e da turma; próximos ou o ano todo)
+- [x] Frequência do filho (total e por disciplina, % e alerta abaixo de 75%)
+- [ ] Testar com dados reais (depende de aulas lançadas em 2027)
 - [ ] **P1** Notas e boletim
 - [ ] **P1** Horário semanal da turma do filho
 - [ ] **P0** Política de privacidade (exigida pelas lojas) e exclusão de conta no app (exigência da Apple)

@@ -98,7 +98,7 @@ export default function Mural() {
         renderItem={({ item }) => <PostCard post={item} />}
         ListHeaderComponent={
           <>
-            <FilhosResumo usuarioId={usuarioId} />
+            <FilhosResumo />
             <FiltroCategorias selecionada={categoria} onChange={mudarCategoria} />
             <ConviteNotificacoes estado={estado} onAtivar={pedirPermissao} />
           </>

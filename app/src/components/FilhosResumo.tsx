@@ -1,27 +1,12 @@
-import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { listarFilhos, type Aluno } from '@/lib/api';
+import { useFilhos } from '@/lib/filhos';
 import { cores, fontes } from '@/lib/theme';
 
 /** Topo do mural para quem entrou: os filhos, com atalho para a carteirinha. */
-export function FilhosResumo({ usuarioId }: { usuarioId: string | null }) {
-  // Guarda de quem é a lista: ao sair (ou trocar de conta) a lista antiga não aparece.
-  const [carregado, setCarregado] = useState<{ dono: string; filhos: Aluno[] } | null>(null);
-
-  useEffect(() => {
-    if (!usuarioId) return;
-    let ativo = true;
-    listarFilhos()
-      .then((f) => ativo && setCarregado({ dono: usuarioId, filhos: f }))
-      .catch(() => {}); // falha aqui não pode esconder o mural; os filhos seguem na tela Família
-    return () => {
-      ativo = false;
-    };
-  }, [usuarioId]);
-
-  const filhos = carregado && carregado.dono === usuarioId ? carregado.filhos : [];
-  if (filhos.length === 0) return null;
+export function FilhosResumo() {
+  const { filhos } = useFilhos();
+  if (!filhos || filhos.length === 0) return null;
 
   return (
     <View style={styles.bloco}>
@@ -42,7 +27,7 @@ export function FilhosResumo({ usuarioId }: { usuarioId: string | null }) {
               {a.nome}
             </Text>
             <Text style={styles.turma} numberOfLines={1}>
-              {a.turma}
+              {a.turmaAtual?.nome ?? a.turma}
             </Text>
           </View>
           <Text style={styles.acao}>Carteirinha ›</Text>

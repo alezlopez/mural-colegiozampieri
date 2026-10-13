@@ -34,3 +34,38 @@ export function dataEvento(iso: string) {
     descricao: `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}${hora}`,
   };
 }
+
+// Datas do diário (AAAA-MM-DD, sem fuso: o dia da escola).
+const DIAS_CURTOS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const MESES_LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+/** Hoje no relógio do celular, como AAAA-MM-DD. */
+export function hojeISO(agora = new Date()) {
+  return `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}-${doisDigitos(agora.getDate())}`;
+}
+
+function paraData(iso: string) {
+  return new Date(`${iso}T12:00:00Z`);
+}
+
+export function somarDiasISO(iso: string, dias: number) {
+  const d = paraData(iso);
+  d.setUTCDate(d.getUTCDate() + dias);
+  return d.toISOString().slice(0, 10);
+}
+
+/** "ter, 2 mar" */
+export function diaCurto(iso: string) {
+  const d = paraData(iso);
+  return `${DIAS_CURTOS[d.getUTCDay()]}, ${d.getUTCDate()} ${MESES[d.getUTCMonth()]}`;
+}
+
+/** 0 = domingo … 6 = sábado */
+export function diaDaSemanaISO(iso: string) {
+  return paraData(iso).getUTCDay();
+}
+
+export function nomeDoMes(iso: string) {
+  const d = paraData(iso);
+  return `${MESES_LONGOS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}

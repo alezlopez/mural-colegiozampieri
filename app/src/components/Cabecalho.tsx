@@ -21,11 +21,14 @@ export function Cabecalho() {
             TRADIÇÃO EM EDUCAÇÃO
           </Text>
         </View>
-        <Link href={usuarioId ? '/familia' : '/entrar'} asChild>
-          <Pressable style={styles.acesso} accessibilityRole="button" hitSlop={6}>
-            <Text style={styles.acessoTexto}>{usuarioId ? 'Família' : 'Entrar'}</Text>
-          </Pressable>
-        </Link>
+        {/* Logado, a área da família fica na aba "Família". */}
+        {!usuarioId && (
+          <Link href="/entrar" asChild>
+            <Pressable style={styles.acesso} accessibilityRole="button" hitSlop={6}>
+              <Text style={styles.acessoTexto}>Entrar</Text>
+            </Pressable>
+          </Link>
+        )}
       </View>
       <Tricolor />
     </View>
