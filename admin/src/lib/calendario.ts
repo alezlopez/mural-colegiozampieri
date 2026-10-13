@@ -94,3 +94,15 @@ export function pontosFacultativos(ano: number) {
     { inicio: somarDias(p, 60), fim: somarDias(p, 60), titulo: "Corpus Christi" },
   ];
 }
+
+/** Eventos que valem para a turma no dia (escola toda ou a turma listada). */
+export function eventosDoDia(eventos: EventoCalendario[], data: string, turmaId?: number) {
+  return eventos.filter(
+    (e) => e.inicio <= data && data <= e.fim && (!e.turmas || e.turmas.length === 0 || (turmaId !== undefined && e.turmas.includes(turmaId))),
+  );
+}
+
+/** Há aula para a turma no dia? Não, se algum evento que vale para ela suspende as aulas. */
+export function semAulaNoDia(eventos: EventoCalendario[], data: string, turmaId: number) {
+  return eventosDoDia(eventos, data, turmaId).find((e) => !e.letivo) ?? null;
+}

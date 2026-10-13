@@ -10,8 +10,12 @@ export default async function PaginaAula({ searchParams }: PageProps<"/professor
   const p = await searchParams;
   const turmaId = Number(p.turma);
   const disciplinaId = Number(p.disciplina);
-  const aulaNumero = Number(p.aula ?? 1);
+  // "aula=2,3": aula dupla — mesmo conteúdo e mesma chamada para as duas.
+  const numeros = [...new Set(String(p.aula ?? "1").split(",").map(Number))].filter((n) => Number.isInteger(n) && n >= 1 && n <= 15).sort((a, b) => a - b);
+  const aulaNumero = numeros[0];
   const data = typeof p.data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.data) ? p.data : null;
+  // Volta para onde veio (o dia ou o histórico da turma); só caminhos da área do professor.
+  const volta = typeof p.volta === "string" && /^\/professor[\w/?=&.-]*$/.test(p.volta) ? p.volta : `/professor?data=${data}`;
   if (![turmaId, disciplinaId, aulaNumero].every(Number.isInteger) || !data) {
     return <p className="text-sm text-vinho">Aula inválida. Volte e escolha a turma de novo.</p>;
   }
@@ -54,12 +58,12 @@ export default async function PaginaAula({ searchParams }: PageProps<"/professor
 
   return (
     <div className="space-y-4">
-      <Link href={`/professor?data=${data}`} className="text-sm text-verde-claro">
+      <Link href={volta} className="text-sm text-verde-claro">
         ‹ Voltar
       </Link>
       <div>
         <p className="text-[11px] font-bold tracking-[0.2em] text-dourado">
-          {aulaNumero}ª AULA · {formatarDataCurta(data).toUpperCase()}
+          {numeros.map((n) => `${n}ª`).join(" E ")} AULA{numeros.length > 1 ? "S" : ""} · {formatarDataCurta(data).toUpperCase()}
         </p>
         <h1 className="font-titulo text-2xl leading-tight text-verde-escuro">{vinculo.disciplinas?.nome}</h1>
         <p className="text-sm text-texto-suave">{vinculo.turmas?.nome}</p>
@@ -67,7 +71,8 @@ export default async function PaginaAula({ searchParams }: PageProps<"/professor
       <FormAula
         turmaId={turmaId}
         disciplinaId={disciplinaId}
-        aulaNumero={aulaNumero}
+        aulaNumeros={numeros}
+        volta={volta}
         data={data}
         conteudo={aula?.conteudo ?? ""}
         tarefa={aula?.tarefa ?? ""}

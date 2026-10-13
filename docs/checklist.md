@@ -120,10 +120,14 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 - [x] Tela "Hoje": aulas do dia pelo horário semanal, navegação entre dias, LANÇADA/LANÇAR
 - [x] Lançar aula: conteúdo, tarefa com data de entrega, chamada (P / F / FJ)
-- [ ] **P0** Respeitar o calendário: não oferecer aula em feriado/recesso; liberar sábado letivo
-- [ ] **P0** Histórico das aulas lançadas por turma/disciplina (ver e corrigir)
+- [x] Só as turmas do ano em uso (marcado no Calendário; sem marcação, o maior ano com turma ativa)
+- [x] Respeita o calendário: feriado/recesso sem aula (escola toda ou por turma), avisos do dia, sábado letivo,
+      fora do período letivo; "lançar mesmo assim" para exceções
+- [x] Minhas turmas: alunos, aulas lançadas e última data por turma/disciplina
+- [x] Histórico das aulas lançadas por turma/disciplina (ver e corrigir)
+- [x] Frequência por aluno na disciplina (% e alerta abaixo de 75%; falta justificada conta como ausência)
 - [ ] P1 Planejamento semanal/mensal (tabela já existe; falta a tela)
-- [ ] P1 Lançar aula repetida (aula dupla) de uma vez
+- [x] Aula dupla: aulas seguidas da mesma disciplina viram um lançamento só (conteúdo e chamada para as duas)
 - [ ] **P1** Lançamento de notas por avaliação
 
 ## 9. Coordenação e relatórios

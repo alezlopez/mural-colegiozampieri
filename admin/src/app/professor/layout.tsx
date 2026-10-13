@@ -17,7 +17,15 @@ export default function LayoutProfessor({ children }: LayoutProps<"/professor">)
               <span className="block text-[10px] font-bold tracking-[0.2em] text-dourado-claro">DIÁRIO DO PROFESSOR</span>
             </span>
           </Link>
-          <form action={sair} className="ml-auto">
+          <nav className="ml-auto flex items-center gap-4 text-sm" aria-label="Área do professor">
+            <Link href="/professor" className="text-creme/90 hover:text-white">
+              Hoje
+            </Link>
+            <Link href="/professor/turmas" className="text-creme/90 hover:text-white">
+              Minhas turmas
+            </Link>
+          </nav>
+          <form action={sair}>
             <button className="text-sm text-creme/80 underline-offset-4 hover:text-white hover:underline">Sair</button>
           </form>
         </div>

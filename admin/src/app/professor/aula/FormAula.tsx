@@ -12,7 +12,8 @@ const PROXIMO: Record<Status, Status> = { presente: "falta", falta: "falta_justi
 export function FormAula(props: {
   turmaId: number;
   disciplinaId: number;
-  aulaNumero: number;
+  aulaNumeros: number[];
+  volta: string;
   data: string;
   conteudo: string;
   tarefa: string;
@@ -33,7 +34,8 @@ export function FormAula(props: {
     <form action={acao} className="space-y-5 pb-24">
       <input type="hidden" name="turma_id" value={props.turmaId} />
       <input type="hidden" name="disciplina_id" value={props.disciplinaId} />
-      <input type="hidden" name="aula_numero" value={props.aulaNumero} />
+      <input type="hidden" name="aula_numeros" value={props.aulaNumeros.join(",")} />
+      <input type="hidden" name="volta" value={props.volta} />
       <input type="hidden" name="data" value={props.data} />
 
       <label className="block">
@@ -116,7 +118,7 @@ export function FormAula(props: {
         <div className="mx-auto max-w-3xl">
           {estado.erro && <p className="mb-2 text-sm text-vinho">{estado.erro}</p>}
           <button type="submit" disabled={enviando} className="botao-primario w-full !py-3.5">
-            {enviando ? "Salvando…" : "Salvar aula e chamada"}
+            {enviando ? "Salvando…" : props.aulaNumeros.length > 1 ? `Salvar as ${props.aulaNumeros.length} aulas e a chamada` : "Salvar aula e chamada"}
           </button>
         </div>
       </div>
