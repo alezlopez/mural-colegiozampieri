@@ -27,7 +27,7 @@ export default async function PaginaCalendario({ searchParams }: PageProps<"/cal
   const [{ data: anoLetivo }, { data: bimestres }, { data: eventosBrutos }, { data: turmas }] = await Promise.all([
     supabase.from("anos_letivos").select("ano,inicio,fim,ativo").eq("ano", ano).maybeSingle(),
     supabase.from("bimestres").select("numero,inicio,fim").eq("ano", ano).order("numero"),
-    supabase.from("calendario_eventos").select("id,inicio,fim,tipo,titulo,descricao,letivo,turmas,publico").eq("ano", ano).order("inicio"),
+    supabase.from("calendario_eventos").select("id,inicio,fim,tipo,titulo,descricao,letivo,turmas,publico,segue_dia_semana").eq("ano", ano).order("inicio"),
     supabase.from("turmas").select("id,nome").eq("ano", ano).eq("ativa", true).order("nome"),
   ]);
   const eventos = (eventosBrutos ?? []) as EventoCalendario[];
@@ -174,6 +174,11 @@ export default async function PaginaCalendario({ searchParams }: PageProps<"/cal
                             {TIPOS_EVENTO[e.tipo]?.rotulo ?? e.tipo}
                           </span>
                           {!e.letivo && <span className="rounded-full bg-creme px-2 py-0.5 text-texto-suave">sem aula</span>}
+                          {e.segue_dia_semana ? (
+                            <span className="rounded-full bg-creme px-2 py-0.5 text-texto-suave">
+                              horário de {["segunda", "terça", "quarta", "quinta", "sexta"][e.segue_dia_semana - 1]}
+                            </span>
+                          ) : null}
                           {!e.publico && <span className="rounded-full bg-creme px-2 py-0.5 text-texto-suave">interno</span>}
                           {e.turmas?.length ? (
                             <span className="rounded-full bg-creme px-2 py-0.5 text-texto-suave" title={e.turmas.map((t) => nomeTurma.get(t)).join("; ")}>

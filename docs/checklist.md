@@ -132,7 +132,11 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 ## 9. Coordenação e relatórios
 
-- [ ] **P0** Aulas não lançadas por professor/turma/dia (cobrança)
+- [x] Aulas não lançadas por professor/turma/dia (7 dias, 30 dias ou ano), com % lançado e aviso de professor sem acesso
+- [x] Calendário de aulas da turma: mês a mês (previstas, lançadas, pendentes) e previstas por disciplina no ano e
+      por bimestre
+- [x] Sábado letivo "segue o horário de" um dia da semana (calendário, diário e cálculos)
+- [ ] P1 Horário com vigência (mudança de horário no meio do ano sem alterar a conta dos meses anteriores)
 - [ ] **P1** Frequência por aluno e por turma, alerta de alunos abaixo de 75%
 - [ ] P1 Visão do diário de qualquer turma (leitura)
 - [ ] P2 Ata de resultados, conselho de classe

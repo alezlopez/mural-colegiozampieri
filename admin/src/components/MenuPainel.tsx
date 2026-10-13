@@ -27,6 +27,10 @@ const GRUPOS = [
       { href: "/calendario", rotulo: "Calendário" },
     ],
   },
+  {
+    titulo: "Coordenação",
+    itens: [{ href: "/pendencias", rotulo: "Aulas não lançadas" }],
+  },
 ];
 
 // "/" só fica ativo nele mesmo e nas telas de publicação; os demais valem para as subpáginas.

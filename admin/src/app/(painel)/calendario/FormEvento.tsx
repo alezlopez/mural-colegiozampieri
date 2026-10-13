@@ -57,6 +57,19 @@ export function FormEvento({ ano, evento, turmas }: Props) {
       </label>
 
       <div className="space-y-2 text-sm">
+        {tipo === "sabado_letivo" && (
+          <label className="block">
+            <span className="rotulo">Segue o horário de</span>
+            <select name="segue_dia_semana" defaultValue={evento?.segue_dia_semana ?? ""} className="campo sm:max-w-xs">
+              <option value="">Sem horário (o professor escolhe a turma)</option>
+              {["Segunda", "Terça", "Quarta", "Quinta", "Sexta"].map((d, i) => (
+                <option key={d} value={i + 1}>
+                  {d}-feira
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {tipo !== "sabado_letivo" && (
           <label className="flex items-center gap-2">
             <input type="checkbox" name="sem_aula" checked={semAula} onChange={(e) => setSemAula(e.target.checked)} />

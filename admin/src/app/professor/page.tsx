@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { anoEmUso } from "@/lib/ano-letivo";
 import { exigirProfessor } from "@/lib/auth";
+import { diaDoHorario } from "@/lib/aulas-previstas";
 import { eventosDoDia, semAulaNoDia, TIPOS_EVENTO, type EventoCalendario } from "@/lib/calendario";
 import { diaDaSemana, formatarDataCurta, hojeEmBrasilia, somarDias } from "@/lib/datas";
 
@@ -35,10 +36,10 @@ export default async function Hoje({ searchParams }: PageProps<"/professor">) {
   const turmaIds = [...new Set(vinculos.map((v) => v.turma_id))];
 
   const [{ data: slots }, { data: horarios }, { data: lancadas }, { data: eventosBrutos }, { count: horarioCadastrado }] = await Promise.all([
-    supabase.from("turma_horario").select("turma_id,dia_semana,aula_numero,disciplina_id").in("turma_id", turmaIds).eq("dia_semana", dia),
+    supabase.from("turma_horario").select("turma_id,dia_semana,aula_numero,disciplina_id").in("turma_id", turmaIds),
     supabase.from("modelo_horario_aulas").select("modelo_id,numero,inicio,fim"),
     supabase.from("aulas").select("turma_id,disciplina_id,aula_numero,conteudo").in("turma_id", turmaIds).eq("data", data),
-    supabase.from("calendario_eventos").select("id,inicio,fim,tipo,titulo,descricao,letivo,turmas,publico").lte("inicio", data).gte("fim", data),
+    supabase.from("calendario_eventos").select("id,inicio,fim,tipo,titulo,descricao,letivo,turmas,publico,segue_dia_semana").lte("inicio", data).gte("fim", data),
     supabase.from("turma_horario").select("turma_id", { count: "exact", head: true }).in("turma_id", turmaIds),
   ]);
   const eventos = (eventosBrutos ?? []) as EventoCalendario[];
@@ -49,7 +50,9 @@ export default async function Hoje({ searchParams }: PageProps<"/professor">) {
     (lancadas as AulaLancada[] | null)?.some((a) => a.turma_id === t && a.disciplina_id === d && a.aula_numero === n && a.conteudo);
 
   const foraDoPeriodo = Boolean(letivo.inicio && letivo.fim && (data < letivo.inicio || data > letivo.fim));
-  const sabadoLetivo = dia === 6 && eventosDoDia(eventos, data).some((e) => e.tipo === "sabado_letivo");
+  // Horário que vale hoje para cada turma: o do dia, nenhum (feriado/recesso) ou, no sábado letivo, o do dia indicado.
+  const diaDaTurma = new Map(turmaIds.map((t) => [t, diaDoHorario(eventos, data, t)]));
+  const sabadoLetivo = dia === 6 && eventosDoDia(eventos, data).some((e) => e.tipo === "sabado_letivo" && !e.segue_dia_semana);
   const suspensas = new Map<number, EventoCalendario>();
   for (const t of turmaIds) {
     const e = semAulaNoDia(eventos, data, t);
@@ -58,7 +61,7 @@ export default async function Hoje({ searchParams }: PageProps<"/professor">) {
 
   // Aulas do dia pelo horário; aulas seguidas da mesma disciplina na mesma turma viram uma só (aula dupla).
   const doDia = ((slots as Slot[] | null) ?? [])
-    .filter((s) => meus.has(`${s.turma_id}:${s.disciplina_id}`) && !suspensas.has(s.turma_id))
+    .filter((s) => meus.has(`${s.turma_id}:${s.disciplina_id}`) && diaDaTurma.get(s.turma_id) === s.dia_semana)
     .map((s) => {
       const v = meus.get(`${s.turma_id}:${s.disciplina_id}`)!;
       return { ...s, turma: v.turmas!.nome, disciplina: v.disciplinas?.nome ?? "", h: hora(v.turmas!.modelo_horario_id, s.aula_numero) };

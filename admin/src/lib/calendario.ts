@@ -26,6 +26,8 @@ export type EventoCalendario = {
   letivo: boolean;
   turmas: number[] | null;
   publico: boolean;
+  /** Sábado letivo: segue o horário deste dia da semana (1 = segunda … 5 = sexta). */
+  segue_dia_semana?: number | null;
 };
 
 /**

@@ -87,6 +87,9 @@ export default async function PaginaTurma({ params, searchParams }: PageProps<"/
               <Link href={`/horarios?turma=${turma.id}`} className="text-sm text-verde-claro underline-offset-4 hover:underline">
                 Horário semanal ›
               </Link>
+              <Link href={`/turmas/${turma.id}/calendario`} className="text-sm text-verde-claro underline-offset-4 hover:underline">
+                Calendário de aulas ›
+              </Link>
             </div>
           </form>
         </section>

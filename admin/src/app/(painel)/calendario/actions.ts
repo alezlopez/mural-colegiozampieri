@@ -89,6 +89,7 @@ export async function salvarEvento(formData: FormData) {
     letivo: tipo === "sabado_letivo" ? true : formData.get("sem_aula") !== "on",
     publico: formData.get("publico") === "on",
     turmas: turmas.length > 0 ? turmas : null,
+    segue_dia_semana: tipo === "sabado_letivo" && /^[1-5]$/.test(texto(formData, "segue_dia_semana")) ? Number(texto(formData, "segue_dia_semana")) : null,
   };
   const { error } = id
     ? await supabase.from("calendario_eventos").update(linha).eq("id", id)
