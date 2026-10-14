@@ -246,8 +246,15 @@ export async function sincronizarMhund(
   for (const r of responsaveisMhund) {
     if (r.eResponsavelFinanceiro === "Sim" && !financeiro.has(String(r.idDoAluno))) financeiro.set(String(r.idDoAluno), r);
   }
+  // Só os acessos criados pela Mhund: os que a secretaria deu no painel (pai/mãe) a sincronização não remove.
   const vinculosHub = await lerTudo((de, ate) =>
-    db.from("aluno_responsaveis").select("aluno_codigo,telefone,nome,cpf").order("aluno_codigo").order("telefone").range(de, ate),
+    db
+      .from("aluno_responsaveis")
+      .select("aluno_codigo,telefone,nome,cpf")
+      .eq("origem", "mhund")
+      .order("aluno_codigo")
+      .order("telefone")
+      .range(de, ate),
   );
   const vinculosAtuais = new Map<string, { telefone: string; nome: string | null; cpf: string | null }[]>();
   for (const v of vinculosHub) {
@@ -434,7 +441,7 @@ export async function sincronizarMhund(
   for (const v of vinculosParaRemover) {
     falhou(
       "responsáveis antigos",
-      (await db.from("aluno_responsaveis").delete().eq("aluno_codigo", v.aluno_codigo).eq("telefone", v.telefone)).error,
+      (await db.from("aluno_responsaveis").delete().eq("aluno_codigo", v.aluno_codigo).eq("telefone", v.telefone).eq("origem", "mhund")).error,
     );
   }
 

@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { anoEmUso } from "@/lib/ano-letivo";
-import { exigirArea } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { exigirAdmin } from "@/lib/auth";
+import { alcanca } from "@/lib/permissoes";
 
 type Achado = { codigo: string; nome: string; turma: string | null; ativo: boolean };
 
 export default async function BuscarAluno({ searchParams }: PageProps<"/alunos">) {
-  const { supabase } = await exigirArea("acompanhamento");
+  // Busca comum: a coordenação abre a ficha (acompanhamento); a secretaria, o cadastro.
+  const { supabase, permissoes } = await exigirAdmin();
+  const veFicha = alcanca(permissoes.acompanhamento, "ver");
+  if (!veFicha && !alcanca(permissoes.secretaria, "ver")) redirect("/sem-permissao?area=secretaria&nivel=ver");
   const p = await searchParams;
   const q = typeof p.q === "string" ? p.q.trim() : "";
   const { ano } = await anoEmUso(supabase);
@@ -31,8 +36,8 @@ export default async function BuscarAluno({ searchParams }: PageProps<"/alunos">
 
   return (
     <div className="max-w-3xl">
-      <h1 className="font-titulo text-3xl text-verde-escuro">Ficha do aluno</h1>
-      <p className="mt-1 text-sm text-texto-suave">Busque pelo nome ou pelo código para ver notas, frequência, turma e responsáveis.</p>
+      <h1 className="font-titulo text-3xl text-verde-escuro">Alunos</h1>
+      <p className="mt-1 text-sm text-texto-suave">Busque pelo nome ou pelo código para abrir a ficha (notas, frequência, ocorrências) ou o cadastro (dados pessoais, responsáveis e matrícula).</p>
       <form className="mt-4 flex gap-2" action="/alunos">
         <input name="q" defaultValue={q} placeholder="Nome ou código do aluno" className="campo flex-1" autoFocus minLength={2} />
         <button className="botao-primario">Buscar</button>
@@ -43,7 +48,7 @@ export default async function BuscarAluno({ searchParams }: PageProps<"/alunos">
           {achados.length === 0 && <li className="p-4 text-sm text-texto-suave">Ninguém encontrado.</li>}
           {achados.map((a) => (
             <li key={a.codigo}>
-              <Link href={`/alunos/${a.codigo}`} className={`flex items-center gap-3 px-3 py-2 text-sm hover:bg-creme ${a.ativo ? "" : "opacity-55"}`}>
+              <Link href={veFicha ? `/alunos/${a.codigo}` : `/alunos/${a.codigo}/cadastro`} className={`flex items-center gap-3 px-3 py-2 text-sm hover:bg-creme ${a.ativo ? "" : "opacity-55"}`}>
                 <span className="min-w-0 flex-1 truncate font-bold text-verde-escuro">{a.nome}</span>
                 <span className="text-xs text-texto-suave">{a.turma ?? (a.ativo ? `sem turma em ${ano}` : "inativo")}</span>
                 <span className="text-[11px] text-texto-suave">{a.codigo}</span>

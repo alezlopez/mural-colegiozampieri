@@ -12,7 +12,7 @@ import { CartaoOcorrencia } from "../../ocorrencias/CartaoOcorrencia";
 type Matricula = { turma_id: number; ano: number; situacao: string | null; ativa: boolean; numero_chamada: number | null; turmas: { nome: string } | null };
 
 export default async function FichaDoAluno({ params }: PageProps<"/alunos/[codigo]">) {
-  const { supabase, podeEditar } = await exigirArea("acompanhamento");
+  const { supabase, podeEditar, permissoes } = await exigirArea("acompanhamento");
   const { codigo } = await params;
   const { ano } = await anoEmUso(supabase);
 
@@ -59,7 +59,14 @@ export default async function FichaDoAluno({ params }: PageProps<"/alunos/[codig
       <Link href="/alunos" className="text-sm text-verde-claro underline-offset-4 hover:underline">
         ‹ Buscar outro aluno
       </Link>
-      <h1 className="mt-2 font-titulo text-3xl text-verde-escuro">{aluno.nome}</h1>
+      <div className="mt-2 flex flex-wrap items-end gap-3">
+        <h1 className="flex-1 font-titulo text-3xl text-verde-escuro">{aluno.nome}</h1>
+        {permissoes.secretaria !== "nenhum" && (
+          <Link href={`/alunos/${codigo}/cadastro`} className="botao-secundario !px-3 !py-1.5 text-sm">
+            Cadastro e matrícula
+          </Link>
+        )}
+      </div>
       <p className="mt-1 text-sm text-texto-suave">
         Código {aluno.codigo}
         {!aluno.ativo && <strong className="text-vinho"> · INATIVO</strong>}

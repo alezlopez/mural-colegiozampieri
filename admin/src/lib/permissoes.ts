@@ -3,7 +3,7 @@
 
 export const AREAS = {
   comunicacao: { rotulo: "Comunicação", descricao: "Publicações e fotos dos alunos" },
-  secretaria: { rotulo: "Secretaria", descricao: "Rematrícula" },
+  secretaria: { rotulo: "Secretaria", descricao: "Cadastro de alunos e responsáveis, matrícula e rematrícula" },
   estrutura: { rotulo: "Estrutura pedagógica", descricao: "Matriz, turmas e alunos, disciplinas, professores, horários e calendário" },
   avaliacao: { rotulo: "Avaliação", descricao: "Regras de notas e publicação do boletim" },
   acompanhamento: { rotulo: "Acompanhamento", descricao: "Visão geral, professores, alunos em risco, ficha do aluno, ocorrências, aulas não lançadas, planejamentos (visto) e boletins" },
@@ -23,7 +23,8 @@ export const alcanca = (tem: Nivel, precisa: Nivel) => ORDEM[tem] >= ORDEM[preci
 export function areaDoCaminho(pathname: string): Area | null {
   const p = pathname.replace(/\/+$/, "") || "/";
   if (p === "/" || p.startsWith("/posts") || p.startsWith("/fotos")) return "comunicacao";
-  if (p.startsWith("/rematricula")) return "secretaria";
+  if (p.startsWith("/rematricula") || /^\/alunos\/[^/]+\/cadastro/.test(p)) return "secretaria";
+  if (p === "/alunos") return null; // busca: serve à secretaria (cadastro) e à coordenação (ficha)
   if (["/matriz", "/turmas", "/disciplinas", "/professores", "/horarios", "/calendario"].some((r) => p.startsWith(r))) return "estrutura";
   if (p.startsWith("/avaliacao")) return "avaliacao";
   if (["/acompanhamento", "/alunos", "/ocorrencias", "/pendencias", "/planejamentos", "/boletim"].some((r) => p.startsWith(r))) return "acompanhamento";
@@ -50,7 +51,10 @@ export const MENU: { titulo: string; itens: { href: string; rotulo: string; area
   },
   {
     titulo: "Secretaria",
-    itens: [{ href: "/rematricula", rotulo: "Rematrícula", area: "secretaria" }],
+    itens: [
+      { href: "/alunos", rotulo: "Alunos", area: "secretaria" },
+      { href: "/rematricula", rotulo: "Rematrícula", area: "secretaria" },
+    ],
   },
   {
     titulo: "Pedagógico",

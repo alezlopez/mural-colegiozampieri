@@ -9,3 +9,6 @@ export function normalizarCpf(entrada: string): string | null {
   };
   return dv(cpf.slice(0, 9)) === Number(cpf[9]) && dv(cpf.slice(0, 10)) === Number(cpf[10]) ? cpf : null;
 }
+
+/** "12345678909" → "123.456.789-09" */
+export const formatarCpf = (cpf: string) => cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");

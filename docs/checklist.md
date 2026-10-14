@@ -167,13 +167,46 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 ## 11. Secretaria (para sair da Mhund — etapa 2)
 
-- [ ] P2 Cadastro completo de aluno e responsáveis no painel
-- [ ] P2 Matrícula e rematrícula (a partir do sistema de rematrícula atual)
+Plano em 3 fases (decidido em 14/10/2026). **Decisão:** em 2027 a secretaria continua cadastrando aluno novo **na
+Mhund**; na virada (Fase B) faz-se uma última importação e, dali em diante, aluno novo só pelo painel. Só um sistema
+é "dono" do cadastro de cada vez — nunca os dois.
+
+**Fase A — cadastro complementar (Mhund ainda é a dona de nome, turma e responsável financeiro)**
+- [x] Página **Cadastro e matrícula** do aluno (Secretaria → Alunos → aluno): dados pessoais — nome social, nascimento,
+      naturalidade, nacionalidade (padrão Brasileira), CPF, RG, endereço com busca pelo CEP (ViaCEP). Telefone e
+      e-mail do aluno = os do responsável financeiro.
+- [x] Pais/responsáveis: CPF, RG, nome, nome social, nascimento, naturalidade, nacionalidade, estado civil, celular
+      (55 + DDD + número, só dígitos), e-mail, pai/mãe/outro, responsável financeiro (um por aluno), acesso ao app.
+      Pessoa cadastrada uma vez e ligada a cada filho (irmãos: o CPF reaproveita o cadastro).
+- [x] Pai/mãe com celular ganham acesso ao app (LDB art. 12, VII: informar pai e mãe, convivendo ou não; tirar o
+      acesso só com ordem judicial). A sincronização só remove acessos que ela criou (`origem = mhund`).
+- [x] Matricular / trocar de turma pela página do aluno (inclusive turmas do ano seguinte).
+- [x] Dados pessoais em tabela só da equipe (`aluno_dados`): professor não vê CPF, RG nem endereço.
+- [ ] **Descobrir o que a API da Mhund devolve**: rodar à noite
+      `.../api/cron/sincronizar-mhund?ano=2027&campos=1` (só nomes de campos, sem dados pessoais) e decidir o que
+      importar (nascimento, CPF, endereço, pais…) para não redigitar ~513 cadastros.
+- [ ] Importação desses campos da Mhund preenchendo só o que está vazio no painel (nunca sobrescreve o que a
+      secretaria editou).
+- [ ] Rodar no SQL Editor (limpeza; colunas vazias de uma 1ª versão):
+      `alter table public.alunos drop column if exists nome_social, drop column if exists nascimento, drop column if exists naturalidade, drop column if exists nacionalidade, drop column if exists cpf, drop column if exists rg, drop column if exists cep, drop column if exists logradouro, drop column if exists numero, drop column if exists complemento, drop column if exists bairro, drop column if exists cidade, drop column if exists uf, drop column if exists cadastro_atualizado_em;`
+- [ ] Relatório de cadastros incompletos (sem CPF, sem endereço, sem responsável financeiro com celular).
+
+**Fase B — virada (data a combinar; depois da rematrícula)**
+- [ ] Última importação completa da Mhund (alunos, responsáveis, dados pessoais).
+- [ ] Desligar a sincronização de alunos/responsáveis (`aluno_responsaveis` passa a ser mantido só pelo painel).
+- [ ] **Novo aluno** pelo painel: código próprio do aluno, ficha completa, matrícula na turma.
+- [ ] Nome e responsável financeiro editáveis no painel (hoje vêm da Mhund).
+- [ ] Rematrícula feita no painel (hoje é só relatório).
+- [ ] Treinar a secretaria antes da virada.
+
+**Depois da virada (ainda etapa 2)**
 - [ ] P2 Histórico escolar, declarações e documentos em PDF
-- [ ] P2 Dados para o Censo Escolar
+- [ ] P2 Dados para o Censo Escolar (cor/raça, deficiência etc. — exigidos pelo INEP)
 
 ## 12. Financeiro (etapa 3)
 
+**Fase C — só depois da virada do cadastro.** Decidir antes: quem emite boleto/Pix (Itaú por API ou Asaas), contrato,
+planos e descontos/bolsas, multa e juros, nota fiscal de serviço (NFS-e), régua de cobrança, reajuste anual.
 - [ ] P3 Mensalidades com baixa automática (Itaú por API ou Asaas)
 - [ ] P3 Cobrança de inadimplência
 - [ ] P3 Eventos e excursões pelo Asaas
@@ -189,4 +222,4 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 ---
 
-Última atualização: 11/10/2026.
+Última atualização: 14/10/2026.

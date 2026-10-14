@@ -79,4 +79,28 @@ export class ClienteMhund {
     }
     return itens;
   }
+
+  /**
+   * Só os NOMES dos campos (e o tipo do valor) da 1ª página de uma listagem, sem nenhum dado pessoal.
+   * Serve para descobrir o que a Mhund oferece antes de importar.
+   */
+  async camposDe(caminho: string): Promise<{ itensNaPagina: number; campos: Record<string, string> }> {
+    const url = new URL(`${BASE}/${caminho}`);
+    url.searchParams.set("pagina", "1");
+    const resp = await this.buscar(url);
+    if (!resp.ok) throw new Error(`Mhund ${caminho}: HTTP ${resp.status} ${(await resp.text()).slice(0, 200)}`);
+    const corpo = (await resp.json()) as Pagina<Record<string, unknown>>;
+    const campos: Record<string, string> = {};
+    const tipo = (v: unknown) => (v === null ? "vazio" : Array.isArray(v) ? "lista" : typeof v);
+    for (const item of corpo.itens ?? []) {
+      for (const [k, v] of Object.entries(item)) {
+        // Guarda o tipo mais informativo visto (um campo pode vir vazio em uns e preenchido em outros).
+        if (!campos[k] || campos[k] === "vazio") campos[k] = tipo(v);
+        if (v && typeof v === "object" && !Array.isArray(v)) {
+          for (const [k2, v2] of Object.entries(v)) if (!campos[`${k}.${k2}`] || campos[`${k}.${k2}`] === "vazio") campos[`${k}.${k2}`] = tipo(v2);
+        }
+      }
+    }
+    return { itensNaPagina: (corpo.itens ?? []).length, campos };
+  }
 }

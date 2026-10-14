@@ -1,8 +1,10 @@
-import { sincronizarMhund } from "@/lib/sincronizacao-mhund";
+import { ClienteMhund } from "@/lib/mhund";
+import { DESDE_SEMPRE, sincronizarMhund } from "@/lib/sincronizacao-mhund";
 import { criarClienteServico } from "@/lib/supabase/servico";
 
 // Chamado pelo n8n (agendado, 1x por dia) com Authorization: Bearer <CRON_SECRET>.
 // ?simular=1 só calcula e devolve o que mudaria, sem gravar. ?ano=2027 sincroniza outro ano letivo.
+// ?campos=1 não sincroniza: lista só os nomes dos campos que a Mhund devolve (sem dados pessoais).
 // ?desde=AAAA-MM-DD sincroniza só o que mudou desde a data (de dia, a Mhund aceita no máximo 30 dias).
 // Grava turmas, matrículas (ensalamento), alunos e responsável financeiro do ano. ?grade=1 também disciplinas,
 // professores e grade (desligado: os professores de 2027 são atribuídos no painel).
@@ -22,6 +24,19 @@ export async function POST(request: Request) {
   try {
     const desdeBruto = url.searchParams.get("desde");
     if (desdeBruto && !/^\d{4}-\d{2}-\d{2}$/.test(desdeBruto)) return Response.json({ erro: "Data inválida." }, { status: 400 });
+    if (url.searchParams.get("campos") === "1") {
+      const cliente = ClienteMhund.doAmbiente();
+      const desde = desdeBruto ? `${desdeBruto}T00:00:00` : DESDE_SEMPRE;
+      const resultado: Record<string, unknown> = {};
+      for (const recurso of ["Aluno", "Responsavel", "Matricula", "Curso"]) {
+        try {
+          resultado[recurso] = await cliente.camposDe(`${recurso}/${ano}/${desde}`);
+        } catch (e) {
+          resultado[recurso] = { erro: e instanceof Error ? e.message : String(e) };
+        }
+      }
+      return Response.json({ ano, campos: resultado });
+    }
     const resumo = await sincronizarMhund(criarClienteServico(), ano, {
       simular: url.searchParams.get("simular") === "1",
       grade: url.searchParams.get("grade") === "1",
