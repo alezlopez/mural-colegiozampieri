@@ -5,6 +5,7 @@ import { formatarDataCurta } from "@/lib/datas";
 import { lerTudo } from "@/lib/ler-tudo";
 import { bimestresDoAno, regraDoSegmento } from "@/lib/avaliacao-db";
 import { FormNotas } from "./FormNotas";
+import { rotuloPeriodo, type Periodo } from "@/lib/planejamento";
 
 type Aula = {
   id: string;
@@ -24,7 +25,7 @@ export default async function PaginaTurma({ searchParams }: PageProps<"/professo
   const p = await searchParams;
   const turmaId = Number(p.turma);
   const disciplinaId = Number(p.disciplina);
-  const aba = p.aba === "alunos" ? "alunos" : p.aba === "notas" ? "notas" : "aulas";
+  const aba = p.aba === "alunos" ? "alunos" : p.aba === "notas" ? "notas" : p.aba === "planejamento" ? "planejamento" : "aulas";
   if (!Number.isInteger(turmaId) || !Number.isInteger(disciplinaId)) {
     return <p className="text-sm text-vinho">Turma inválida.</p>;
   }
@@ -62,9 +63,21 @@ export default async function PaginaTurma({ searchParams }: PageProps<"/professo
         <Link href={`${base}&aba=notas`} className={aba === "notas" ? "botao-primario !px-4 !py-2" : "botao-secundario !px-4 !py-2"}>
           Notas
         </Link>
+        <Link href={`${base}&aba=planejamento`} className={aba === "planejamento" ? "botao-primario !px-4 !py-2" : "botao-secundario !px-4 !py-2"}>
+          Planejamento
+        </Link>
       </nav>
       {aba === "aulas" ? (
         <Aulas turmaId={turmaId} disciplinaId={disciplinaId} ano={ano} volta={base} supabase={supabase} />
+      ) : aba === "planejamento" ? (
+        <Planejamentos
+          turmaId={turmaId}
+          disciplinaId={disciplinaId}
+          ano={ano}
+          salvo={typeof p.salvo === "string" && p.salvo !== "1" ? p.salvo : null}
+          erro={typeof p.erro === "string" ? p.erro : null}
+          supabase={supabase}
+        />
       ) : aba === "alunos" ? (
         <Alunos turmaId={turmaId} disciplinaId={disciplinaId} ano={ano} supabase={supabase} />
       ) : (
@@ -272,6 +285,62 @@ async function Notas(props: {
         notas={porAluno}
         pareceres={Object.fromEntries((pareceres ?? []).map((p) => [p.aluno_codigo as string, p.texto as string]))}
       />
+    </div>
+  );
+}
+
+type Plano = { id: string; periodo: Periodo; inicio: string; fim: string; texto: string; visto_em: string | null; comentario_coordenacao: string | null };
+
+async function Planejamentos(props: { turmaId: number; disciplinaId: number; ano: number; salvo: string | null; erro: string | null; supabase: Cliente }) {
+  const { turmaId, disciplinaId, ano, supabase } = props;
+  const { data } = await supabase
+    .from("planejamentos")
+    .select("id,periodo,inicio,fim,texto,visto_em,comentario_coordenacao")
+    .eq("turma_id", turmaId)
+    .eq("disciplina_id", disciplinaId)
+    .gte("inicio", `${ano}-01-01`)
+    .lte("inicio", `${ano}-12-31`)
+    .order("inicio", { ascending: false })
+    .overrideTypes<Plano[], { merge: false }>();
+  const planos = data ?? [];
+  const novo = `/professor/planejamento?turma=${turmaId}&disciplina=${disciplinaId}`;
+
+  return (
+    <div className="space-y-3">
+      {props.salvo && (
+        <p role="status" className="rounded-md border border-verde-claro/30 bg-verde-claro/10 px-3 py-2 text-sm text-verde-escuro">
+          {props.salvo}
+        </p>
+      )}
+      {props.erro && <p className="rounded-md border border-vinho/30 bg-vinho/5 px-3 py-2 text-sm text-vinho">{props.erro}</p>}
+      <div className="flex flex-wrap gap-2">
+        <Link href={novo} className="botao-primario">
+          + Semanal
+        </Link>
+        <Link href={`${novo}&periodo=mensal`} className="botao-secundario">
+          + Mensal
+        </Link>
+      </div>
+      {planos.length === 0 ? (
+        <p className="rounded-lg border border-borda bg-white p-4 text-sm text-texto-suave">Nenhum planejamento ainda.</p>
+      ) : (
+        <ul className="space-y-2">
+          {planos.map((pl) => (
+            <li key={pl.id}>
+              <Link href={`${novo}&id=${pl.id}`} className="block rounded-xl border border-borda bg-white p-3 active:bg-creme">
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs font-bold text-verde-escuro">{rotuloPeriodo(pl.periodo, pl.inicio, pl.fim)}</span>
+                  <span className={`text-[11px] font-bold ${pl.visto_em ? "text-verde-claro" : "text-texto-suave"}`}>
+                    {pl.visto_em ? "VISTO ✓" : "AGUARDANDO VISTO"}
+                  </span>
+                </span>
+                <span className="mt-1 line-clamp-2 block text-sm text-texto">{pl.texto}</span>
+                {pl.comentario_coordenacao && <span className="mt-1 block text-xs text-dourado">Há comentário da coordenação</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

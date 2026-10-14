@@ -131,12 +131,14 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [x] Minhas turmas: alunos, aulas lançadas e última data por turma/disciplina
 - [x] Histórico das aulas lançadas por turma/disciplina (ver e corrigir)
 - [x] Frequência por aluno na disciplina (% e alerta abaixo de 75%; falta justificada conta como ausência)
-- [ ] P1 Planejamento semanal/mensal (tabela já existe; falta a tela)
+- [x] Planejamento semanal e mensal (objetivos, conteúdos, metodologia, recursos, avaliação), cópia para outras turmas
+      da mesma disciplina, visto e comentário da coordenação (o visto cai se o professor alterar depois)
 - [x] Aula dupla: aulas seguidas da mesma disciplina viram um lançamento só (conteúdo e chamada para as duas)
 - [ ] **P1** Lançamento de notas por avaliação
 
 ## 9. Coordenação e relatórios
 
+- [x] Planejamentos da semana: quem planejou, quem não planejou, aguardando visto
 - [x] Aulas não lançadas por professor/turma/dia (7 dias, 30 dias ou ano), com % lançado e aviso de professor sem acesso
 - [x] Calendário de aulas da turma: mês a mês (previstas, lançadas, pendentes) e previstas por disciplina no ano e
       por bimestre

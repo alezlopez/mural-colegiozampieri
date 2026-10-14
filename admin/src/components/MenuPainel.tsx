@@ -32,6 +32,7 @@ const GRUPOS = [
     titulo: "Coordenação",
     itens: [
       { href: "/pendencias", rotulo: "Aulas não lançadas" },
+      { href: "/planejamentos", rotulo: "Planejamentos" },
       { href: "/boletim", rotulo: "Boletins" },
     ],
   },
