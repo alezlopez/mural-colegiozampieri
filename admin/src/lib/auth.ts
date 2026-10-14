@@ -76,8 +76,9 @@ export async function exigirProfessor({ permitirTrocaPendente = false } = {}) {
 
 /** Para onde mandar o usuário logo após o login. */
 export async function destinoAposLogin(supabase: ClienteSupabase, userId: string) {
-  const { data: admin } = await supabase.from("admins").select("user_id").eq("user_id", userId).maybeSingle();
-  if (admin) return "/";
+  const { data: admin } = await supabase.from("admins").select("perfil").eq("user_id", userId).maybeSingle();
+  // Coordenação começa pelo acompanhamento; direção e secretaria, pelo mural.
+  if (admin) return admin.perfil === "coordenacao" ? "/acompanhamento" : "/";
   if (await professorDoUsuario(supabase, userId)) return "/professor";
   return null;
 }

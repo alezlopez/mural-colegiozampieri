@@ -115,6 +115,9 @@ export default async function PaginaTurma({ params, searchParams }: PageProps<"/
                         {a.codigo}
                         {a.painel ? " · painel" : ""}
                       </span>
+                      <Link href={`/alunos/${a.codigo}`} className="text-xs text-verde-claro underline-offset-4 hover:underline">
+                        ficha
+                      </Link>
                     </label>
                   </li>
                 ))}

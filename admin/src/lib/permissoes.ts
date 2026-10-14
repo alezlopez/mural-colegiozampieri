@@ -6,7 +6,7 @@ export const AREAS = {
   secretaria: { rotulo: "Secretaria", descricao: "Rematrícula" },
   estrutura: { rotulo: "Estrutura pedagógica", descricao: "Matriz, turmas e alunos, disciplinas, professores, horários e calendário" },
   avaliacao: { rotulo: "Avaliação", descricao: "Regras de notas e publicação do boletim" },
-  acompanhamento: { rotulo: "Acompanhamento", descricao: "Aulas não lançadas, planejamentos (visto) e boletins" },
+  acompanhamento: { rotulo: "Acompanhamento", descricao: "Visão geral, professores, alunos em risco, ficha do aluno, aulas não lançadas, planejamentos (visto) e boletins" },
   equipe: { rotulo: "Equipe", descricao: "Usuários do painel e permissões (só direção)" },
 } as const;
 export type Area = keyof typeof AREAS;
@@ -26,7 +26,7 @@ export function areaDoCaminho(pathname: string): Area | null {
   if (p.startsWith("/rematricula")) return "secretaria";
   if (["/matriz", "/turmas", "/disciplinas", "/professores", "/horarios", "/calendario"].some((r) => p.startsWith(r))) return "estrutura";
   if (p.startsWith("/avaliacao")) return "avaliacao";
-  if (["/pendencias", "/planejamentos", "/boletim"].some((r) => p.startsWith(r))) return "acompanhamento";
+  if (["/acompanhamento", "/alunos", "/pendencias", "/planejamentos", "/boletim"].some((r) => p.startsWith(r))) return "acompanhamento";
   if (p.startsWith("/equipe")) return "equipe";
   return null;
 }
@@ -67,6 +67,10 @@ export const MENU: { titulo: string; itens: { href: string; rotulo: string; area
   {
     titulo: "Coordenação",
     itens: [
+      { href: "/acompanhamento", rotulo: "Visão geral", area: "acompanhamento" },
+      { href: "/acompanhamento/professores", rotulo: "Professores em dia", area: "acompanhamento" },
+      { href: "/acompanhamento/alunos", rotulo: "Alunos em risco", area: "acompanhamento" },
+      { href: "/alunos", rotulo: "Ficha do aluno", area: "acompanhamento" },
       { href: "/pendencias", rotulo: "Aulas não lançadas", area: "acompanhamento" },
       { href: "/planejamentos", rotulo: "Planejamentos", area: "acompanhamento" },
       { href: "/boletim", rotulo: "Boletins", area: "acompanhamento" },

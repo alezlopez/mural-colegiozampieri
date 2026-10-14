@@ -15,6 +15,9 @@ function ativo(pathname: string, href: string) {
 
 function Itens({ grupos, fotosPendentes, aoNavegar }: { grupos: Grupos; fotosPendentes: number; aoNavegar?: () => void }) {
   const pathname = usePathname();
+  // Marca só o item mais específico (ex.: /acompanhamento/alunos não acende também /acompanhamento).
+  const hrefs = grupos.flatMap((g) => g.itens.map((i) => i.href));
+  const maisEspecifico = hrefs.filter((h) => ativo(pathname, h)).sort((a, b) => b.length - a.length)[0];
   return (
     <div className="space-y-5">
       {grupos.map((g) => (
@@ -22,7 +25,7 @@ function Itens({ grupos, fotosPendentes, aoNavegar }: { grupos: Grupos; fotosPen
           <p className="mb-1.5 px-3 text-[11px] font-bold tracking-[0.18em] text-dourado uppercase">{g.titulo}</p>
           <ul className="space-y-0.5">
             {g.itens.map((i) => {
-              const marcado = ativo(pathname, i.href);
+              const marcado = i.href === maisEspecifico;
               return (
                 <li key={i.href}>
                   <Link
