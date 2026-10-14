@@ -217,6 +217,13 @@ async function Alunos({ turmaId, disciplinaId, ano, supabase }: { turmaId: numbe
             >
               {a.pct === null ? "—" : `${a.pct}%`}
             </span>
+            <Link
+              href={`/professor/ocorrencias?turma=${turmaId}&disciplina=${disciplinaId}&aluno=${a.codigo}`}
+              className="text-xs text-verde-claro"
+              aria-label={`Registrar ocorrência de ${a.nome}`}
+            >
+              Ocorrência
+            </Link>
           </li>
         ))}
       </ul>

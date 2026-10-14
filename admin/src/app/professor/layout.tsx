@@ -12,17 +12,20 @@ export default function LayoutProfessor({ children }: LayoutProps<"/professor">)
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white">
               <Image src="/brasao.png" alt="" width={23} height={28} />
             </span>
-            <span>
+            <span className="hidden sm:block">
               <span className="block font-titulo text-base leading-tight">Colégio Zampieri</span>
               <span className="block text-[10px] font-bold tracking-[0.2em] text-dourado-claro">DIÁRIO DO PROFESSOR</span>
             </span>
           </Link>
-          <nav className="ml-auto flex items-center gap-4 text-sm" aria-label="Área do professor">
+          <nav className="ml-auto flex items-center gap-3 text-sm sm:gap-4" aria-label="Área do professor">
             <Link href="/professor" className="text-creme/90 hover:text-white">
               Hoje
             </Link>
             <Link href="/professor/turmas" className="text-creme/90 hover:text-white">
               Minhas turmas
+            </Link>
+            <Link href="/professor/ocorrencias" className="text-creme/90 hover:text-white">
+              Ocorrências
             </Link>
           </nav>
           <form action={sair}>

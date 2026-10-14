@@ -111,6 +111,13 @@ export default function Familia() {
               >
                 <Text style={styles.link}>Boletim ›</Text>
               </Pressable>
+              <Pressable
+                onPress={() => router.push({ pathname: '/ocorrencias/[codigo]', params: { codigo: a.codigo } })}
+                accessibilityRole="button"
+                hitSlop={6}
+              >
+                <Text style={styles.link}>Ocorrências ›</Text>
+              </Pressable>
             </View>
           </View>
         </View>

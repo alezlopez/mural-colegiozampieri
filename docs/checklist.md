@@ -29,6 +29,8 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [ ] **P0 · Desativar no app quem não rematriculou**: quando? (hoje eles continuam ativos; a lista está em
       Secretaria → Rematrícula.)
 - [x] **P1 · Perfis da equipe**: direção, coordenação e secretaria. Tela **Equipe e permissões** (só direção): cadastra pessoa com senha provisória (troca no 1º acesso em /senha), muda perfil, gera nova senha, remove (login bloqueado, não apagado; professor mantém o diário) e define por área (Comunicação, Secretaria, Estrutura, Avaliação, Acompanhamento) se cada perfil tem sem acesso / ver / editar. Menu mostra só o permitido; telas "ver" mostram faixa de somente consulta.
+- [x] **P1 · Acompanhamento da coordenação**: Visão geral (aulas lançadas × previstas, sem chamada, notas do bimestre, planejamentos sem visto, alunos em risco, ocorrências), Professores em dia, Alunos em risco (presença < 75/80/85% e médias abaixo da média) e Ficha do aluno. Coordenação entra direto na Visão geral.
+- [x] **P1 · Ocorrências**: coordenação registra (envia à família ou deixa interna, pode pedir ciência); professor registra pela área dele e fica aguardando revisão da coordenação; família vê no app (Família → Ocorrências), recebe aviso sem o conteúdo na notificação e confirma "Li e estou ciente" quando pedido. **Exige novo build do app.**
 - [ ] **P2 · Permissões no banco**: hoje a checagem é no painel; no banco toda a equipe segue `is_admin()`. Endurecer o RLS por perfil se a equipe crescer ou ganhar acesso direto ao Supabase.
 - [ ] **P2 · Ocorrências disciplinares**: entram no sistema? (a Mhund tem.)
 

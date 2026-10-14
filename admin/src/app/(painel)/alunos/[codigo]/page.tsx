@@ -3,18 +3,20 @@ import Link from "next/link";
 import { FREQUENCIA_MINIMA, frequenciaDoAno, presenca } from "@/lib/acompanhamento";
 import { anoEmUso } from "@/lib/ano-letivo";
 import { exigirArea } from "@/lib/auth";
+import { CAMPOS_OCORRENCIA, type Ocorrencia } from "@/lib/ocorrencias";
 import { formatarNota } from "@/lib/avaliacao";
 import { boletimDaTurma } from "@/lib/boletim";
 import { exibirTelefone } from "@/lib/telefone";
+import { CartaoOcorrencia } from "../../ocorrencias/CartaoOcorrencia";
 
 type Matricula = { turma_id: number; ano: number; situacao: string | null; ativa: boolean; numero_chamada: number | null; turmas: { nome: string } | null };
 
 export default async function FichaDoAluno({ params }: PageProps<"/alunos/[codigo]">) {
-  const { supabase } = await exigirArea("acompanhamento");
+  const { supabase, podeEditar } = await exigirArea("acompanhamento");
   const { codigo } = await params;
   const { ano } = await anoEmUso(supabase);
 
-  const [{ data: aluno }, { data: matriculas }, { data: responsaveis }, freq] = await Promise.all([
+  const [{ data: aluno }, { data: matriculas }, { data: responsaveis }, freq, { data: ocorrencias }, { data: disciplinas }] = await Promise.all([
     supabase.from("alunos").select("codigo,nome,ativo").eq("codigo", codigo).maybeSingle(),
     supabase
       .from("matriculas")
@@ -24,7 +26,16 @@ export default async function FichaDoAluno({ params }: PageProps<"/alunos/[codig
       .overrideTypes<Matricula[], { merge: false }>(),
     supabase.from("aluno_responsaveis").select("nome,telefone").eq("aluno_codigo", codigo).order("nome"),
     frequenciaDoAno(supabase, ano, codigo),
+    supabase
+      .from("ocorrencias")
+      .select(CAMPOS_OCORRENCIA)
+      .eq("aluno_codigo", codigo)
+      .order("data", { ascending: false })
+      .order("criado_em", { ascending: false })
+      .overrideTypes<Ocorrencia[], { merge: false }>(),
+    supabase.from("disciplinas").select("id,nome"),
   ]);
+  const nomeDisc = new Map((disciplinas ?? []).map((d) => [d.id as number, d.nome as string]));
   if (!aluno) notFound();
 
   const atual = (matriculas ?? []).find((m) => m.ano === ano && m.ativa);
@@ -129,7 +140,33 @@ export default async function FichaDoAluno({ params }: PageProps<"/alunos/[codig
           )}
         </section>
 
-        <aside className="space-y-6">
+        <section className="lg:col-span-2 lg:row-start-2">
+          <div className="mb-2 flex items-end gap-2">
+            <h2 className="flex-1 font-titulo text-xl text-verde-escuro">Ocorrências ({(ocorrencias ?? []).length})</h2>
+            {podeEditar && (
+              <Link href={`/ocorrencias?aluno=${codigo}#nova`} className="botao-secundario !px-3 !py-1.5 text-sm">
+                + Registrar
+              </Link>
+            )}
+          </div>
+          {(ocorrencias ?? []).length === 0 ? (
+            <p className="rounded-lg border border-borda bg-white p-4 text-sm text-texto-suave">Nenhuma ocorrência registrada.</p>
+          ) : (
+            <ul className="space-y-3">
+              {(ocorrencias ?? []).map((o) => (
+                <CartaoOcorrencia
+                  key={o.id}
+                  o={o}
+                  disciplina={o.disciplina_id ? nomeDisc.get(o.disciplina_id) : null}
+                  volta={`/alunos/${codigo}`}
+                  podeEditar={podeEditar}
+                />
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <aside className="space-y-6 lg:col-start-2 lg:row-start-1">
           <section>
             <h2 className="mb-2 font-titulo text-xl text-verde-escuro">Responsáveis</h2>
             <ul className="divide-y divide-borda rounded-xl border border-borda bg-white text-sm">

@@ -29,14 +29,14 @@ if (Platform.OS !== 'web') {
   });
 }
 
-/** Toque na notificação abre a tela indicada (data.url = "/post/<id>" ou "/carteirinha/<código>"). */
+/** Toque na notificação abre a tela indicada (data.url = "/post/<id>", "/carteirinha/<código>" ou "/ocorrencias/<código>"). */
 function useAbrirPostDaNotificacao() {
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
     function abrir(notificacao: Notifications.Notification) {
       const url = notificacao.request.content.data?.url;
-      if (typeof url === 'string' && (url.startsWith('/post/') || url.startsWith('/carteirinha/'))) {
+      if (typeof url === 'string' && (url.startsWith('/post/') || url.startsWith('/carteirinha/') || url.startsWith('/ocorrencias/'))) {
         router.push(url as `/post/${string}`);
       }
     }
@@ -99,6 +99,7 @@ function Navegacao() {
         <Stack.Screen name="frequencia/[codigo]" options={{ title: 'Frequência', headerBackTitle: 'Voltar' }} />
         <Stack.Screen name="boletim/[codigo]" options={{ title: 'Boletim', headerBackTitle: 'Voltar' }} />
         <Stack.Screen name="carteirinha/[codigo]" options={{ title: 'Carteirinha', headerBackTitle: 'Voltar' }} />
+        <Stack.Screen name="ocorrencias/[codigo]" options={{ title: 'Ocorrências', headerBackTitle: 'Voltar' }} />
       </Stack>
       {bloqueado && <TelaBloqueio />}
     </>

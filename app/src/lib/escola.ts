@@ -202,3 +202,35 @@ export async function boletimDoAluno(codigo: string, turma: TurmaDoAluno) {
     .sort((a, b) => a.disciplina.localeCompare(b.disciplina));
   return { regra, disciplinas, publicados };
 }
+
+// Ocorrências: a família só lê as que a escola enviou (status "publicada", garantido pelo RLS).
+export const TIPOS_OCORRENCIA: Record<string, string> = { disciplinar: 'Disciplinar', pedagogica: 'Pedagógica', outra: 'Outra' };
+export type OcorrenciaDaFamilia = {
+  id: string;
+  data: string;
+  tipo: string;
+  descricao: string;
+  providencia: string | null;
+  registrado_por_nome: string;
+  exige_ciencia: boolean;
+  ciencia_em: string | null;
+};
+
+export async function ocorrenciasDoAluno(codigo: string): Promise<OcorrenciaDaFamilia[]> {
+  const { data, error } = await supabase
+    .from('ocorrencias')
+    .select('id,data,tipo,descricao,providencia,registrado_por_nome,exige_ciencia,ciencia_em')
+    .eq('aluno_codigo', codigo)
+    .eq('status', 'publicada')
+    .order('data', { ascending: false })
+    .order('criado_em', { ascending: false });
+  if (error) throw new Error('Não foi possível carregar as ocorrências.');
+  return data as OcorrenciaDaFamilia[];
+}
+
+/** "Li e estou ciente": registra data/hora e o celular de quem confirmou. */
+export async function darCiencia(id: string): Promise<string> {
+  const { data, error } = await supabase.rpc('dar_ciencia_ocorrencia', { p_id: id });
+  if (error) throw new Error('Não foi possível confirmar a leitura. Tente de novo.');
+  return data as string;
+}

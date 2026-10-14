@@ -2,15 +2,18 @@ import Link from "next/link";
 import { Indicador } from "@/components/Indicador";
 import { alunosEmRisco, FREQUENCIA_MINIMA, pct, resumoProfessores } from "@/lib/acompanhamento";
 import { exigirArea } from "@/lib/auth";
-import { formatarDataCurta } from "@/lib/datas";
+import { formatarDataCurta, hojeEmBrasilia, somarDias } from "@/lib/datas";
 import { AvisosDeCadastro } from "./AvisosDeCadastro";
 
 export default async function VisaoGeral() {
   const { supabase } = await exigirArea("acompanhamento");
-  const [prof, risco, { count: aguardandoVisto }] = await Promise.all([
+  const [prof, risco, { count: aguardandoVisto }, { count: ocorrPendentes }, { count: semCiencia }, { count: ocorrMes }] = await Promise.all([
     resumoProfessores(supabase),
     alunosEmRisco(supabase),
     supabase.from("planejamentos").select("id", { count: "exact", head: true }).is("visto_em", null),
+    supabase.from("ocorrencias").select("id", { count: "exact", head: true }).eq("status", "pendente"),
+    supabase.from("ocorrencias").select("id", { count: "exact", head: true }).eq("status", "publicada").eq("exige_ciencia", true).is("ciencia_em", null),
+    supabase.from("ocorrencias").select("id", { count: "exact", head: true }).gte("data", somarDias(hojeEmBrasilia(), -29)),
   ]);
 
   const previstas = prof.professores.reduce((s, p) => s + p.previstas, 0);
@@ -52,6 +55,13 @@ export default async function VisaoGeral() {
         />
         <Indicador rotulo="Abaixo da média" valor={porNotas.length} detalhe="em ao menos um bimestre" alerta={porNotas.length > 0} href="/acompanhamento/alunos?tipo=notas" />
         <Indicador rotulo="Com chamada registrada" valor={risco.comChamada} detalhe="alunos com frequência no ano" />
+      </ul>
+
+      <h2 className="mt-6 rotulo">Ocorrências</h2>
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <Indicador rotulo="Aguardando revisão" valor={ocorrPendentes ?? 0} detalhe="registradas por professores" alerta={(ocorrPendentes ?? 0) > 0} href="/ocorrencias?filtro=revisar" />
+        <Indicador rotulo="Ciência pendente" valor={semCiencia ?? 0} detalhe="família ainda não confirmou" alerta={(semCiencia ?? 0) > 0} href="/ocorrencias?filtro=ciencia" />
+        <Indicador rotulo="Últimos 30 dias" valor={ocorrMes ?? 0} detalhe="ocorrências registradas" href="/ocorrencias?filtro=todas" />
       </ul>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">

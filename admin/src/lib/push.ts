@@ -159,3 +159,36 @@ export async function enviarPushParaUsuario(userId: string, titulo: string, corp
     await expo.sendPushNotificationsAsync(lote);
   }
 }
+
+/**
+ * Avisa os responsáveis (aparelhos com o app) de uma ocorrência enviada à família. O texto da notificação não traz
+ * o conteúdo da ocorrência: ele aparece na tela bloqueada, à vista de quem estiver perto.
+ */
+export async function enviarPushOcorrencia(alunoCodigo: string, nomeAluno: string, pedeCiencia: boolean) {
+  const db = criarClienteServico();
+  const { data, error } = await db.rpc("tokens_do_aluno", { p_aluno: alunoCodigo });
+  if (error) throw new Error(`Erro ao ler dispositivos: ${error.message}`);
+  const tokens = ((data ?? []) as { token: string }[]).map((l) => l.token).filter((t) => Expo.isExpoPushToken(t));
+  if (tokens.length === 0) return 0;
+  const primeiro = nomeAluno.trim().split(/\s+/)[0];
+  const expo = clienteExpo();
+  const mensagens: ExpoPushMessage[] = tokens.map((to) => ({
+    to,
+    title: "Colégio Zampieri · Ocorrência",
+    body: `A escola registrou uma ocorrência de ${primeiro}.${pedeCiencia ? " Abra o app e confirme a leitura." : " Toque para ver."}`,
+    data: { url: `/ocorrencias/${alunoCodigo}` },
+    sound: "default",
+    channelId: CANAL_ANDROID,
+    priority: "high",
+  }));
+  let enviados = 0;
+  for (const lote of expo.chunkPushNotifications(mensagens)) {
+    try {
+      const r = await expo.sendPushNotificationsAsync(lote);
+      enviados += r.filter((t) => t.status === "ok").length;
+    } catch (e) {
+      console.error("[push] falha ao avisar ocorrência", e);
+    }
+  }
+  return enviados;
+}
