@@ -148,10 +148,14 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 
 ## 10. Avaliação (notas)
 
-- [ ] **P1** Configuração por segmento: nº de notas, pesos, média azul (6), arredondamento da escola
-- [ ] **P1** Notas por bimestre, média bimestral, recuperação bimestral (substitui se maior)
-- [ ] **P1** Boletim (painel, PDF e app)
-- [ ] P1 Infantil: relatório descritivo por bimestre
+- [x] Configuração por ano e segmento: avaliações e pesos, média (6), arredondamento da escola, recuperação
+      bimestral, descritivo (Painel → Avaliação e boletim); regras de 2027 já carregadas
+- [x] Professor lança notas por bimestre (média calculada na hora, recuperação aparece para quem ficou abaixo)
+- [x] Infantil: parecer descritivo por disciplina e bimestre
+- [x] Boletim no painel (por aluno ou turma inteira, imprimir/PDF, com faltas) e no app (só bimestres publicados)
+- [x] Publicação do boletim por bimestre (família só vê depois de publicado)
+- [ ] Confirmar com a escola: arredondamento aplicado à média do bimestre (antes da recuperação) e à média final
+- [ ] P1 Fechamento do bimestre (travar a edição das notas depois de publicado)
 - [ ] **P2** Recuperação final (substitui a média final, sem teto), resultado (aprovado, DP com < 3, reprovado,
       aprovado pelo conselho)
 - [ ] P2 Frequência mínima de 75% no resultado (total e por disciplina)

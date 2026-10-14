@@ -1,16 +1,17 @@
+import { mediaAnual, resultadoBimestre, type RegraAvaliacao, type ResultadoBimestre } from './avaliacao';
 import { supabase } from './supabase';
 
 // Dados da vida escolar para a família (diário, frequência, calendário). As regras de acesso (RLS) garantem que o
 // responsável só lê as aulas e o calendário da turma do filho e a frequência do próprio filho.
 
-export type TurmaDoAluno = { turma_id: number; nome: string; ano: number };
+export type TurmaDoAluno = { turma_id: number; nome: string; ano: number; segmento: string };
 export type StatusChamada = 'presente' | 'falta' | 'falta_justificada';
 
 /** Turma em que o aluno está matriculado no ano mais recente (a do ano letivo em uso). */
 export async function turmaAtual(codigo: string): Promise<TurmaDoAluno | null> {
   const { data, error } = await supabase
     .from('matriculas')
-    .select('turma_id,ano,turmas(nome)')
+    .select('turma_id,ano,turmas(nome,segmento)')
     .eq('aluno_codigo', codigo)
     .eq('ativa', true)
     .order('ano', { ascending: false })
@@ -18,8 +19,8 @@ export async function turmaAtual(codigo: string): Promise<TurmaDoAluno | null> {
     .maybeSingle();
   if (error) throw new Error('Não foi possível carregar a turma.');
   if (!data) return null;
-  const turma = data.turmas as unknown as { nome: string } | null;
-  return { turma_id: data.turma_id, ano: data.ano, nome: turma?.nome ?? '' };
+  const turma = data.turmas as unknown as { nome: string; segmento: string } | null;
+  return { turma_id: data.turma_id, ano: data.ano, nome: turma?.nome ?? '', segmento: turma?.segmento ?? '' };
 }
 
 export type AulaDoDia = {
@@ -154,4 +155,50 @@ export async function frequenciaDoAluno(codigo: string, turmaId: number, ano: nu
     justificadas: 0,
   });
   return { disciplinas, total: { ...total, percentual: pct(total) } };
+}
+
+// ---------------------------------------------------------------------------
+// Boletim: a família só recebe as notas dos bimestres que a escola publicou (regra no banco).
+// ---------------------------------------------------------------------------
+
+export type DisciplinaNoBoletim = {
+  disciplina: string;
+  bimestres: { numero: number; publicado: boolean; resultado: ResultadoBimestre; parecer: string | null }[];
+  anual: { media: number | null; parcial: number | null };
+};
+
+export async function boletimDoAluno(codigo: string, turma: TurmaDoAluno) {
+  const [{ data: config }, { data: bimestres }, { data: vinculos }, { data: notas }, { data: pareceres }] = await Promise.all([
+    supabase
+      .from('avaliacao_config')
+      .select('avaliacoes,media_aprovacao,arredondamento,recuperacao_bimestral,descritivo')
+      .eq('ano', turma.ano)
+      .eq('segmento', turma.segmento)
+      .maybeSingle(),
+    supabase.from('bimestres').select('numero,boletim_publicado').eq('ano', turma.ano).order('numero'),
+    supabase.from('turma_disciplinas').select('disciplina_id,disciplinas(nome)').eq('turma_id', turma.turma_id),
+    supabase.from('notas').select('disciplina_id,bimestre,avaliacao,valor').eq('aluno_codigo', codigo).eq('ano', turma.ano),
+    supabase.from('pareceres').select('disciplina_id,bimestre,texto').eq('aluno_codigo', codigo).eq('ano', turma.ano),
+  ]);
+  if (!config) return { regra: null, disciplinas: [], publicados: [] as number[] };
+  const regra: RegraAvaliacao = { ...(config as RegraAvaliacao), media_aprovacao: Number(config.media_aprovacao) };
+  const publicados = (bimestres ?? []).filter((b) => b.boletim_publicado).map((b) => b.numero as number);
+
+  const disciplinas: DisciplinaNoBoletim[] = ((vinculos ?? []) as unknown as { disciplina_id: number; disciplinas: { nome: string } | null }[])
+    .map((v) => {
+      const porBimestre = [1, 2, 3, 4].map((b) => {
+        const daqui = Object.fromEntries(
+          (notas ?? []).filter((n) => n.disciplina_id === v.disciplina_id && n.bimestre === b).map((n) => [n.avaliacao, Number(n.valor)]),
+        );
+        return {
+          numero: b,
+          publicado: publicados.includes(b),
+          resultado: resultadoBimestre(daqui, regra),
+          parecer: (pareceres ?? []).find((p) => p.disciplina_id === v.disciplina_id && p.bimestre === b)?.texto ?? null,
+        };
+      });
+      return { disciplina: v.disciplinas?.nome ?? '', bimestres: porBimestre, anual: mediaAnual(porBimestre.map((x) => x.resultado.final), regra) };
+    })
+    .sort((a, b) => a.disciplina.localeCompare(b.disciplina));
+  return { regra, disciplinas, publicados };
 }

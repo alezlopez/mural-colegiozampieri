@@ -14,7 +14,7 @@ export default async function LayoutPainel({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="relative bg-verde-escuro text-white">
+      <header className="relative bg-verde-escuro text-white print:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white">
@@ -35,13 +35,13 @@ export default async function LayoutPainel({ children }: LayoutProps<"/">) {
         </div>
         <div className="tricolor h-1" />
       </header>
-      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 py-8 sm:px-6">
-        <aside className="hidden w-56 shrink-0 lg:block">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 py-8 sm:px-6 print:block print:max-w-none print:p-0">
+        <aside className="hidden w-56 shrink-0 lg:block print:hidden">
           <MenuLateral fotosPendentes={fotosPendentes} />
         </aside>
         <main className="min-w-0 flex-1">{children}</main>
       </div>
-      <footer className="border-t border-borda py-6 text-center text-xs tracking-[0.15em] text-texto-suave">
+      <footer className="border-t border-borda py-6 text-center text-xs tracking-[0.15em] text-texto-suave print:hidden">
         COLÉGIO ZAMPIERI · TRADIÇÃO EM EDUCAÇÃO
       </footer>
     </div>

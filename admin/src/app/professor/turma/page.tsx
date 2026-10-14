@@ -3,6 +3,8 @@ import { anoEmUso } from "@/lib/ano-letivo";
 import { exigirProfessor } from "@/lib/auth";
 import { formatarDataCurta } from "@/lib/datas";
 import { lerTudo } from "@/lib/ler-tudo";
+import { bimestresDoAno, regraDoSegmento } from "@/lib/avaliacao-db";
+import { FormNotas } from "./FormNotas";
 
 type Aula = {
   id: string;
@@ -22,19 +24,19 @@ export default async function PaginaTurma({ searchParams }: PageProps<"/professo
   const p = await searchParams;
   const turmaId = Number(p.turma);
   const disciplinaId = Number(p.disciplina);
-  const aba = p.aba === "alunos" ? "alunos" : "aulas";
+  const aba = p.aba === "alunos" ? "alunos" : p.aba === "notas" ? "notas" : "aulas";
   if (!Number.isInteger(turmaId) || !Number.isInteger(disciplinaId)) {
     return <p className="text-sm text-vinho">Turma inválida.</p>;
   }
 
   const { data: vinculo } = await supabase
     .from("turma_disciplinas")
-    .select("turmas(nome,ano),disciplinas(nome)")
+    .select("turmas(nome,ano,segmento),disciplinas(nome)")
     .eq("turma_id", turmaId)
     .eq("disciplina_id", disciplinaId)
     .eq("professor_id", professor.id)
     .maybeSingle()
-    .overrideTypes<{ turmas: { nome: string; ano: number } | null; disciplinas: { nome: string } | null } | null, { merge: false }>();
+    .overrideTypes<{ turmas: { nome: string; ano: number; segmento: string } | null; disciplinas: { nome: string } | null } | null, { merge: false }>();
   if (!vinculo) return <p className="text-sm text-vinho">Esta turma/disciplina não está vinculada a você.</p>;
 
   const letivo = await anoEmUso(supabase);
@@ -55,13 +57,27 @@ export default async function PaginaTurma({ searchParams }: PageProps<"/professo
           Aulas
         </Link>
         <Link href={`${base}&aba=alunos`} className={aba === "alunos" ? "botao-primario !px-4 !py-2" : "botao-secundario !px-4 !py-2"}>
-          Alunos e frequência
+          Frequência
+        </Link>
+        <Link href={`${base}&aba=notas`} className={aba === "notas" ? "botao-primario !px-4 !py-2" : "botao-secundario !px-4 !py-2"}>
+          Notas
         </Link>
       </nav>
       {aba === "aulas" ? (
         <Aulas turmaId={turmaId} disciplinaId={disciplinaId} ano={ano} volta={base} supabase={supabase} />
-      ) : (
+      ) : aba === "alunos" ? (
         <Alunos turmaId={turmaId} disciplinaId={disciplinaId} ano={ano} supabase={supabase} />
+      ) : (
+        <Notas
+          turmaId={turmaId}
+          disciplinaId={disciplinaId}
+          ano={ano}
+          segmento={vinculo.turmas?.segmento ?? ""}
+          bimestrePedido={Number(p.bimestre)}
+          salvo={p.salvo === "1"}
+          base={base}
+          supabase={supabase}
+        />
       )}
     </div>
   );
@@ -192,5 +208,70 @@ async function Alunos({ turmaId, disciplinaId, ano, supabase }: { turmaId: numbe
         ))}
       </ul>
     </>
+  );
+}
+
+async function Notas(props: {
+  turmaId: number;
+  disciplinaId: number;
+  ano: number;
+  segmento: string;
+  bimestrePedido: number;
+  salvo: boolean;
+  base: string;
+  supabase: Cliente;
+}) {
+  const { supabase, turmaId, disciplinaId, ano } = props;
+  const [regra, { bimestres, atual }] = await Promise.all([regraDoSegmento(supabase, ano, props.segmento), bimestresDoAno(supabase, ano)]);
+  const bimestre = props.bimestrePedido >= 1 && props.bimestrePedido <= 4 ? props.bimestrePedido : atual;
+
+  const [{ data: matriculas }, { data: notas }, { data: pareceres }] = await Promise.all([
+    supabase
+      .from("matriculas")
+      .select("aluno_codigo,numero_chamada,alunos(nome)")
+      .eq("turma_id", turmaId)
+      .eq("ativa", true)
+      .overrideTypes<{ aluno_codigo: string; numero_chamada: number | null; alunos: { nome: string } | null }[], { merge: false }>(),
+    supabase.from("notas").select("aluno_codigo,avaliacao,valor").eq("disciplina_id", disciplinaId).eq("ano", ano).eq("bimestre", bimestre),
+    supabase.from("pareceres").select("aluno_codigo,texto").eq("disciplina_id", disciplinaId).eq("ano", ano).eq("bimestre", bimestre),
+  ]);
+  const alunos = (matriculas ?? [])
+    .map((m) => ({ codigo: m.aluno_codigo, nome: m.alunos?.nome ?? `Aluno ${m.aluno_codigo}`, numero: m.numero_chamada }))
+    .sort((a, b) => (a.numero ?? 999) - (b.numero ?? 999) || a.nome.localeCompare(b.nome, "pt-BR"));
+  const porAluno: Record<string, Record<string, number>> = {};
+  for (const n of notas ?? []) (porAluno[n.aluno_codigo as string] ??= {})[n.avaliacao as string] = Number(n.valor);
+  const publicado = bimestres.find((b) => b.numero === bimestre)?.boletim_publicado;
+
+  return (
+    <div className="space-y-3">
+      <nav className="flex flex-wrap gap-2" aria-label="Bimestre">
+        {[1, 2, 3, 4].map((b) => (
+          <a key={b} href={`${props.base}&aba=notas&bimestre=${b}`} className={b === bimestre ? "botao-primario !px-3 !py-1.5" : "botao-secundario !px-3 !py-1.5"}>
+            {b}º bim.
+          </a>
+        ))}
+      </nav>
+      {props.salvo && (
+        <p role="status" className="rounded-md border border-verde-claro/30 bg-verde-claro/10 px-3 py-2 text-sm text-verde-escuro">
+          {regra.descritivo ? "Pareceres salvos." : "Notas salvas."}
+        </p>
+      )}
+      {publicado && (
+        <p className="rounded-md border border-dourado/40 bg-dourado/10 px-3 py-2 text-sm text-texto">
+          O boletim deste bimestre já foi publicado: as famílias veem as alterações na hora.
+        </p>
+      )}
+      <FormNotas
+        key={bimestre}
+        turmaId={turmaId}
+        disciplinaId={disciplinaId}
+        ano={ano}
+        bimestre={bimestre}
+        regra={regra}
+        alunos={alunos}
+        notas={porAluno}
+        pareceres={Object.fromEntries((pareceres ?? []).map((p) => [p.aluno_codigo as string, p.texto as string]))}
+      />
+    </div>
   );
 }

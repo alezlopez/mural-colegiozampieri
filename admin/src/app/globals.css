@@ -48,3 +48,10 @@ body {
     );
   }
 }
+
+/* Impressão (boletins): fundo branco e sem o cromo do painel. */
+@media print {
+  body {
+    background: white;
+  }
+}

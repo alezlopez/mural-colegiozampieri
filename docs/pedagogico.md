@@ -128,5 +128,9 @@ equipe (admin) gerencia tudo.
    Renomear usa `renomear_turma()`, que atualiza junto `alunos.turma` e `posts.turmas` (o nome é o elo com o app).
    A sincronização liga a turma criada no painel à da Mhund de mesmo nome e ano (sem duplicar) e respeita as
    turmas editadas. Migração `20261015000000_turmas_manuais.sql`. Menu do painel agrupado (Comunicação, Pedagógico).
+3d. Notas e boletim: **feito**. Regras em `avaliacao_config` (ano × segmento), cálculo em `lib/avaliacao.ts`
+   (cópia idêntica no app), notas em `notas` (uma linha por avaliação; `rec` = recuperação bimestral), pareceres do
+   Infantil em `pareceres`. Arredondamento da escola na média do bimestre (antes da recuperação) e na média final.
+   Família só lê bimestres com `bimestres.boletim_publicado`. Migração `20261020000000_notas_boletim.sql`.
 4. "Hoje na escola" e frequência no app das famílias.
 5. Notas e boletim (após confirmar as regras).

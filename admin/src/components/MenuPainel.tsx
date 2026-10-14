@@ -25,11 +25,15 @@ const GRUPOS = [
       { href: "/professores", rotulo: "Professores" },
       { href: "/horarios", rotulo: "Horários" },
       { href: "/calendario", rotulo: "Calendário" },
+      { href: "/avaliacao", rotulo: "Avaliação e boletim" },
     ],
   },
   {
     titulo: "Coordenação",
-    itens: [{ href: "/pendencias", rotulo: "Aulas não lançadas" }],
+    itens: [
+      { href: "/pendencias", rotulo: "Aulas não lançadas" },
+      { href: "/boletim", rotulo: "Boletins" },
+    ],
   },
 ];
 

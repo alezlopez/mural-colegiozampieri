@@ -104,6 +104,13 @@ export default function Familia() {
               >
                 <Text style={styles.link}>Frequência ›</Text>
               </Pressable>
+              <Pressable
+                onPress={() => router.push({ pathname: '/boletim/[codigo]', params: { codigo: a.codigo } })}
+                accessibilityRole="button"
+                hitSlop={6}
+              >
+                <Text style={styles.link}>Boletim ›</Text>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -172,7 +179,7 @@ const styles = StyleSheet.create({
   inicialTexto: { fontFamily: fontes.titulo, fontSize: 20, color: cores.douradoClaro },
   nome: { fontFamily: fontes.titulo, fontSize: 18, color: cores.verdeEscuro },
   link: { fontFamily: fontes.corpoNegrito, fontSize: 13, color: cores.verdeClaro },
-  acoes: { flexDirection: 'row', gap: 18, marginTop: 6 },
+  acoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 18, marginTop: 6 },
   privacidade: { gap: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: cores.borda },
   excluir: { fontFamily: fontes.corpoNegrito, fontSize: 13, color: cores.vinho },
   detalhe: { fontFamily: fontes.corpo, fontSize: 13, color: cores.textoSuave, marginTop: 2 },
