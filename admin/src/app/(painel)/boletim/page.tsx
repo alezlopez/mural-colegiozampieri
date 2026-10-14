@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { anoEmUso } from "@/lib/ano-letivo";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { SEGMENTOS } from "@/lib/segmentos";
 
 export default async function PaginaBoletins({ searchParams }: PageProps<"/boletim">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("acompanhamento");
   const p = await searchParams;
   const ano = Number(p.ano) || (await anoEmUso(supabase)).ano;
   const { data: turmas } = await supabase.from("turmas").select("id,nome,segmento").eq("ano", ano).eq("ativa", true).order("nome");

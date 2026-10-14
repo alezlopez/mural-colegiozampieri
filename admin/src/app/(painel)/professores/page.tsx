@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { alternarAtivo, criarProfessor } from "./actions";
 import { BotaoAcesso } from "./BotaoAcesso";
 
@@ -15,7 +15,7 @@ type Linha = {
 };
 
 export default async function PaginaProfessores({ searchParams }: PageProps<"/professores">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const sp = await searchParams;
   const { data, error } = await supabase
     .from("professores")

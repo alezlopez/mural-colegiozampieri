@@ -1,5 +1,5 @@
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { alternarDisciplina, criarDisciplina, excluirDisciplina, salvarDisciplina } from "./actions";
 
 type Disciplina = {
@@ -12,7 +12,7 @@ type Disciplina = {
 };
 
 export default async function PaginaDisciplinas({ searchParams }: PageProps<"/disciplinas">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const p = await searchParams;
   const { data, error } = await supabase
     .from("disciplinas")

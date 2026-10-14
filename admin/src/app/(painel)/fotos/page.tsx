@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { formatarDataHora } from "@/lib/datas";
 import { BUCKET_FOTOS_ALUNOS, MOTIVOS_RECUSA_FOTO } from "@/lib/fotos";
 import { revisarFoto } from "./actions";
@@ -13,7 +13,7 @@ type Pendente = {
 };
 
 export default async function PaginaFotos() {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("comunicacao");
   const { data, error } = await supabase
     .from("aluno_fotos")
     .select("id,caminho,enviado_em,aluno_codigo,alunos(nome,turma)")

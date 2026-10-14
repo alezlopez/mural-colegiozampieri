@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { hhmm, type AulaModelo } from "@/lib/horarios";
 import { criarModelo, excluirModelo, salvarModelo } from "../actions";
 
 const LINHAS_EXTRAS = 2;
 
 export default async function PaginaModelos({ searchParams }: PageProps<"/horarios/modelos">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const p = await searchParams;
   const [{ data: modelos }, { data: aulasBrutas }, { data: turmas }] = await Promise.all([
     supabase.from("modelos_horario").select("id,nome").order("id"),

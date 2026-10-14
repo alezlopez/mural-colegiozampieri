@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 
 const SEGMENTOS = new Set(["infantil", "fundamental1", "fundamental2", "medio"]);
 
@@ -15,7 +15,7 @@ function voltar(ano: number, chave: "salvo" | "erro", msg: string, ancora = ""):
  * se marcado, retira as que não estão na matriz — menos as que já têm aula lançada (o histórico não se perde).
  */
 export async function salvarMatriz(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const ano = Number(formData.get("ano"));
   const segmento = String(formData.get("segmento") ?? "");
   const serie = String(formData.get("serie") ?? "").trim();

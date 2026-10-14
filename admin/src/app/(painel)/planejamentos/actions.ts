@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 
 /** Visto da coordenação no planejamento (com comentário opcional, que o professor vê). */
 export async function darVisto(formData: FormData) {
-  const { supabase, userId } = await exigirAdmin();
+  const { supabase, userId } = await exigirArea("acompanhamento", "editar");
   const id = String(formData.get("id") ?? "");
   if (!/^[0-9a-f-]{36}$/.test(id)) redirect("/planejamentos");
   const comentario = String(formData.get("comentario") ?? "").trim().slice(0, 4000) || null;

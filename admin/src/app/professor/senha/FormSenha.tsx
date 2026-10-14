@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import { trocarSenha, type EstadoSenha } from "./actions";
+import type { EstadoSenha } from "./actions";
 
-export function FormSenha() {
+/** Formulário de nova senha; serve ao professor e à equipe do painel (cada um com a sua ação). */
+export function FormSenha({ trocarSenha }: { trocarSenha: (e: EstadoSenha, f: FormData) => Promise<EstadoSenha> }) {
   const [estado, acao, enviando] = useActionState<EstadoSenha, FormData>(trocarSenha, {});
   return (
     <form action={acao} className="space-y-4">

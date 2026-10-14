@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { formatarDataHora } from "@/lib/datas";
 import { rotuloPeriodo, type Periodo } from "@/lib/planejamento";
 import { darVisto } from "../actions";
@@ -33,7 +33,7 @@ const SECOES = [
 ] as const;
 
 export default async function VerPlanejamento({ params, searchParams }: PageProps<"/planejamentos/[id]">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("acompanhamento");
   const { id } = await params;
   const p = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();

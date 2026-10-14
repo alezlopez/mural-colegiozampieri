@@ -1,5 +1,8 @@
+import type { Route } from "next";
 import Link from "next/link";
-import { exigirAdmin } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { exigirAdmin, exigirArea } from "@/lib/auth";
+import { alcanca, inicioDe } from "@/lib/permissoes";
 import { CATEGORIAS, ORDEM_CATEGORIAS, ehCategoria, type Categoria } from "@/lib/categorias";
 import { formatarDataHora } from "@/lib/datas";
 import { criarClienteServico } from "@/lib/supabase/servico";
@@ -47,7 +50,11 @@ function Mensagem({ params }: { params: Record<string, string | string[] | undef
 export default async function Painel({ searchParams }: PageProps<"/">) {
   const params = await searchParams;
   const filtro = ehCategoria(params.categoria) ? params.categoria : undefined;
-  const { supabase } = await exigirAdmin();
+  // O início é o mural; quem não tem Comunicação cai na primeira tela que o perfil pode abrir.
+  const { permissoes } = await exigirAdmin();
+  const inicio = inicioDe(permissoes);
+  if (!alcanca(permissoes.comunicacao, "ver") && inicio && inicio !== "/") redirect(inicio as Route);
+  const { supabase } = await exigirArea("comunicacao");
 
   let consulta = supabase
     .from("posts")

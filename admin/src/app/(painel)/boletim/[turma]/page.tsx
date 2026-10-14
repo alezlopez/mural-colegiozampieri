@@ -2,11 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BoletimImpresso } from "@/components/BoletimImpresso";
 import { BotaoImprimir } from "@/components/BotaoImprimir";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { boletimDaTurma } from "@/lib/boletim";
 
 export default async function BoletinsDaTurma({ params, searchParams }: PageProps<"/boletim/[turma]">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("acompanhamento");
   const { turma: bruto } = await params;
   const p = await searchParams;
   const turmaId = Number(bruto);

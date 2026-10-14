@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { minutos } from "@/lib/horarios";
 
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -10,7 +10,7 @@ const aviso = (base: string, chave: "salvo" | "erro", texto: string) =>
 
 /** Grava o horário semanal da turma: cada célula do formulário é "h_<dia>_<aula>" = id da disciplina (ou vazio). */
 export async function salvarHorario(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const turmaId = Number(formData.get("turma_id"));
   if (!Number.isInteger(turmaId)) redirect("/horarios");
   const volta = `/horarios?turma=${turmaId}`;
@@ -40,7 +40,7 @@ export async function salvarHorario(formData: FormData) {
 }
 
 export async function trocarModeloDaTurma(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const turmaId = Number(formData.get("turma_id"));
   const modeloId = Number(formData.get("modelo_id"));
   if (!Number.isInteger(turmaId) || !Number.isInteger(modeloId)) redirect("/horarios");
@@ -54,7 +54,7 @@ export async function trocarModeloDaTurma(formData: FormData) {
 
 /** Salva os horários de um modelo. Linhas em branco são removidas; as aulas são renumeradas pela hora de início. */
 export async function salvarModelo(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const modeloId = Number(formData.get("modelo_id"));
   const nome = String(formData.get("nome") ?? "").trim();
   const volta = "/horarios/modelos";
@@ -94,7 +94,7 @@ export async function salvarModelo(formData: FormData) {
 }
 
 export async function criarModelo(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const nome = String(formData.get("nome") ?? "").trim();
   const copiarDe = Number(formData.get("copiar_de"));
   const volta = "/horarios/modelos";
@@ -110,7 +110,7 @@ export async function criarModelo(formData: FormData) {
 }
 
 export async function excluirModelo(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const modeloId = Number(formData.get("modelo_id"));
   const volta = "/horarios/modelos";
   if (!Number.isInteger(modeloId)) redirect(volta);

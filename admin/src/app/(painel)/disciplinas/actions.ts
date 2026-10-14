@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 
 // Disciplinas editadas aqui passam a valer mais que a Mhund (editado_no_painel): a sincronização não desfaz.
 
@@ -18,7 +18,7 @@ function dados(formData: FormData) {
 }
 
 export async function criarDisciplina(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const { nome, abreviacao } = dados(formData);
   const { error } = await supabase.from("disciplinas").insert({ nome, abreviacao, ativa: true, editado_no_painel: true });
   if (error) voltar("erro", "Não foi possível cadastrar.");
@@ -26,7 +26,7 @@ export async function criarDisciplina(formData: FormData) {
 }
 
 export async function salvarDisciplina(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) voltar("erro", "Disciplina inválida.");
   const { nome, abreviacao } = dados(formData);
@@ -35,7 +35,7 @@ export async function salvarDisciplina(formData: FormData) {
 }
 
 export async function alternarDisciplina(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const id = Number(formData.get("id"));
   const ativa = formData.get("ativa") === "true";
   if (!Number.isInteger(id)) voltar("erro", "Disciplina inválida.");
@@ -45,7 +45,7 @@ export async function alternarDisciplina(formData: FormData) {
 
 /** Exclusão definitiva só se nunca foi usada (sem turmas, horário nem aulas lançadas); senão, inativar. */
 export async function excluirDisciplina(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) voltar("erro", "Disciplina inválida.");
   const { data: disc } = await supabase.from("disciplinas").select("mhund_id").eq("id", id).maybeSingle();

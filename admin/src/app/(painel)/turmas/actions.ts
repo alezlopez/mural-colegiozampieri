@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 
 // Turmas editadas aqui passam a valer mais que a Mhund (editado_no_painel): a sincronização não desfaz.
 // Turma criada aqui é ligada sozinha à turma da Mhund de mesmo nome e ano, quando ela aparecer lá.
@@ -35,7 +35,7 @@ function dadosTurma(formData: FormData, caminho: string) {
   };
 }
 
-type Cliente = Awaited<ReturnType<typeof exigirAdmin>>["supabase"];
+type Cliente = Awaited<ReturnType<typeof exigirArea>>["supabase"];
 async function nomeRepetido(supabase: Cliente, ano: number, nome: string, exceto?: number) {
   let q = supabase.from("turmas").select("id", { count: "exact", head: true }).eq("ano", ano).ilike("nome", nome);
   if (exceto) q = q.neq("id", exceto);
@@ -43,7 +43,7 @@ async function nomeRepetido(supabase: Cliente, ano: number, nome: string, exceto
 }
 
 export async function criarTurma(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const dados = dadosTurma(formData, "/turmas");
   if (await nomeRepetido(supabase, dados.ano, dados.nome)) voltar(`/turmas?ano=${dados.ano}`, "erro", "Já existe uma turma com esse nome nesse ano.");
   const { data, error } = await supabase
@@ -60,7 +60,7 @@ export async function criarTurma(formData: FormData) {
 }
 
 export async function salvarTurma(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) redirect("/turmas");
   const caminho = `/turmas/${id}`;
@@ -80,7 +80,7 @@ export async function salvarTurma(formData: FormData) {
 }
 
 export async function alternarTurma(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const id = Number(formData.get("id"));
   const ativa = formData.get("ativa") === "true";
   if (!Number.isInteger(id)) redirect("/turmas");
@@ -91,7 +91,7 @@ export async function alternarTurma(formData: FormData) {
 
 /** Exclusão definitiva só de turma sem alunos e sem aulas lançadas; nas demais, inativar. */
 export async function excluirTurma(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) redirect("/turmas");
   const caminho = `/turmas/${id}`;
@@ -114,7 +114,7 @@ export async function excluirTurma(formData: FormData) {
  * editadas no painel; as demais continuam acompanhando a Mhund.
  */
 export async function salvarGrade(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const turmaId = Number(formData.get("turma_id"));
   if (!Number.isInteger(turmaId)) redirect("/turmas");
   const caminho = `/turmas/${turmaId}`;
@@ -146,7 +146,7 @@ export async function salvarGrade(formData: FormData) {
 }
 
 export async function adicionarDisciplina(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const turmaId = Number(formData.get("turma_id"));
   const disciplinaId = Number(formData.get("disciplina_id"));
   const professorId = Number(formData.get("professor_id")) || null;
@@ -217,7 +217,7 @@ const codigosDoForm = (formData: FormData) =>
   [...new Set(formData.getAll("aluno").map((v) => String(v).trim()))].filter((c) => /^[\w.-]{1,40}$/.test(c));
 
 export async function moverAlunos(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const origem = Number(formData.get("turma_id"));
   const destinoId = Number(formData.get("destino_id"));
   if (!Number.isInteger(origem)) redirect("/turmas");
@@ -242,7 +242,7 @@ export async function moverAlunos(formData: FormData) {
 }
 
 export async function adicionarAlunos(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const turmaId = Number(formData.get("turma_id"));
   if (!Number.isInteger(turmaId)) redirect("/turmas");
   const caminho = `/turmas/${turmaId}`;
@@ -279,7 +279,7 @@ export async function adicionarAlunos(formData: FormData) {
 
 /** Tira os alunos da turma (a matrícula fica como histórico, inativa). Eles continuam ativos no app. */
 export async function retirarAlunos(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const turmaId = Number(formData.get("turma_id"));
   if (!Number.isInteger(turmaId)) redirect("/turmas");
   const caminho = `/turmas/${turmaId}`;

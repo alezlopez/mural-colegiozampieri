@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { aulasPrevistas, chaveAula, type Prevista } from "@/lib/aulas-previstas";
 import { aulasLancadas, baseDoAno, menorData } from "@/lib/aulas-previstas-db";
 import { eventosDoDia, TIPOS_EVENTO } from "@/lib/calendario";
@@ -22,7 +22,7 @@ function mesVizinho(mes: string, delta: number) {
 }
 
 export default async function CalendarioDaTurma({ params, searchParams }: PageProps<"/turmas/[id]/calendario">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const { id: bruto } = await params;
   const p = await searchParams;
   const id = Number(bruto);

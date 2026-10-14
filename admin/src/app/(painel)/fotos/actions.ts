@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { MOTIVOS_RECUSA_FOTO } from "@/lib/fotos";
 import { enviarPushParaUsuario } from "@/lib/push";
 
 export async function revisarFoto(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("comunicacao", "editar");
   const id = String(formData.get("id") ?? "");
   const aprovar = formData.get("acao") === "aprovar";
   const motivoBruto = String(formData.get("motivo") ?? "");

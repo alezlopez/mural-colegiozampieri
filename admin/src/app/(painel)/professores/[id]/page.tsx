@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { SEGMENTOS } from "@/lib/segmentos";
 import { alternarAtivo, atribuirVinculo, excluirProfessor, removerVinculo, salvarProfessor } from "../actions";
 import { BotaoAcesso } from "../BotaoAcesso";
@@ -16,7 +16,7 @@ type Turma = { id: number; nome: string; ano: number; segmento: string };
 
 
 export default async function PaginaProfessor({ params, searchParams }: PageProps<"/professores/[id]">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const { id: bruto } = await params;
   const p = await searchParams;
   const id = Number(bruto);

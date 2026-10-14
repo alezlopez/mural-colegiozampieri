@@ -1,16 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AvisoSomenteLeitura } from "@/components/AvisoSomenteLeitura";
 import { MenuCelular, MenuLateral } from "@/components/MenuPainel";
 import { exigirAdmin } from "@/lib/auth";
+import { PERFIS, alcanca, menuDe } from "@/lib/permissoes";
 import { sair } from "../login/actions";
 
 export default async function LayoutPainel({ children }: LayoutProps<"/">) {
-  const { nome, supabase } = await exigirAdmin();
-  const { count } = await supabase
-    .from("aluno_fotos")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pendente");
-  const fotosPendentes = count ?? 0;
+  const { nome, perfil, permissoes, supabase } = await exigirAdmin();
+  const grupos = menuDe(permissoes);
+  let fotosPendentes = 0;
+  if (alcanca(permissoes.comunicacao, "ver")) {
+    const { count } = await supabase
+      .from("aluno_fotos")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pendente");
+    fotosPendentes = count ?? 0;
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -26,20 +32,25 @@ export default async function LayoutPainel({ children }: LayoutProps<"/">) {
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-4 text-sm">
-            <span className="hidden text-creme/80 sm:inline">Olá, {nome}</span>
+            <span className="hidden text-creme/80 sm:inline">
+              Olá, {nome} <span className="text-xs text-dourado-claro">· {PERFIS[perfil]}</span>
+            </span>
             <form action={sair}>
               <button className="text-creme/80 underline-offset-4 hover:text-white hover:underline">Sair</button>
             </form>
-            <MenuCelular fotosPendentes={fotosPendentes} />
+            <MenuCelular grupos={grupos} fotosPendentes={fotosPendentes} />
           </div>
         </div>
         <div className="tricolor h-1" />
       </header>
       <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 py-8 sm:px-6 print:block print:max-w-none print:p-0">
         <aside className="hidden w-56 shrink-0 lg:block print:hidden">
-          <MenuLateral fotosPendentes={fotosPendentes} />
+          <MenuLateral grupos={grupos} fotosPendentes={fotosPendentes} />
         </aside>
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          <AvisoSomenteLeitura permissoes={permissoes} />
+          {children}
+        </main>
       </div>
       <footer className="border-t border-borda py-6 text-center text-xs tracking-[0.15em] text-texto-suave print:hidden">
         COLÉGIO ZAMPIERI · TRADIÇÃO EM EDUCAÇÃO

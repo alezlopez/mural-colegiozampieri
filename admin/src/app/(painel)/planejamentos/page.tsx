@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { anoEmUso } from "@/lib/ano-letivo";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { hojeEmBrasilia, somarDias } from "@/lib/datas";
 import { cobre, rotuloPeriodo, semanaDe, type Periodo } from "@/lib/planejamento";
 
@@ -15,7 +15,7 @@ type Vinculo = {
 type Plano = { id: string; turma_id: number; disciplina_id: number; periodo: Periodo; inicio: string; fim: string; visto_em: string | null };
 
 export default async function Planejamentos({ searchParams }: PageProps<"/planejamentos">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("acompanhamento");
   const p = await searchParams;
   const dataBase = typeof p.semana === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.semana) ? p.semana : hojeEmBrasilia();
   const { inicio, fim } = semanaDe(dataBase);

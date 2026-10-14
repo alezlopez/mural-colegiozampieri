@@ -1,10 +1,10 @@
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { relatorioRematricula } from "@/lib/rematricula";
 import { exibirTelefone } from "@/lib/telefone";
 
 // Planilha (CSV para Excel em português: separador ";" e BOM para os acentos) das listas da rematrícula.
 export async function GET(request: Request) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("secretaria");
   const url = new URL(request.url);
   const base = Number(url.searchParams.get("base"));
   if (!Number.isInteger(base) || base < 2020 || base > 2100) return new Response("Ano inválido", { status: 400 });

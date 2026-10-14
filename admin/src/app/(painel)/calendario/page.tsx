@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { contarDiasLetivos, MINIMO_DIAS_LETIVOS, pontosFacultativos, TIPOS_EVENTO, type EventoCalendario } from "@/lib/calendario";
 import { formatarDataCurta, hojeEmBrasilia } from "@/lib/datas";
 import { excluirEvento, importarFeriados, salvarAnoLetivo } from "./actions";
@@ -17,7 +17,7 @@ const COR_TIPO: Record<string, string> = {
 };
 
 export default async function PaginaCalendario({ searchParams }: PageProps<"/calendario">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const p = await searchParams;
 
   const { data: anoAtivo } = await supabase.from("anos_letivos").select("ano").eq("ativo", true).maybeSingle();

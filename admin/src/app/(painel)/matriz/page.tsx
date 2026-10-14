@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { hojeEmBrasilia } from "@/lib/datas";
 import { SEGMENTOS } from "@/lib/segmentos";
 import { salvarMatriz } from "./actions";
@@ -12,7 +12,7 @@ const ORDEM = Object.keys(SEGMENTOS);
 const ancoraDe = (segmento: string, serie: string) => `${segmento}-${serie}`.normalize("NFD").replace(/[^\w-]+/g, "-").toLowerCase();
 
 export default async function PaginaMatriz({ searchParams }: PageProps<"/matriz">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const p = await searchParams;
 
   const { data: anosBrutos } = await supabase.from("turmas").select("ano").eq("ativa", true);

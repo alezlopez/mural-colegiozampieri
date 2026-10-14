@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { ehCategoria } from "@/lib/categorias";
 import { enviarPushDoPost } from "@/lib/push";
 
@@ -46,7 +46,7 @@ function lerTurmas(bruto: FormDataEntryValue | null): string[] | null | undefine
 }
 
 export async function salvarPost(_: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
-  const { supabase, userId } = await exigirAdmin();
+  const { supabase, userId } = await exigirArea("comunicacao", "editar");
 
   const id = String(formData.get("id") ?? "") || null;
   const categoria = formData.get("categoria");
@@ -141,7 +141,7 @@ export async function salvarPost(_: EstadoFormulario, formData: FormData): Promi
 }
 
 export async function excluirPost(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("comunicacao", "editar");
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
@@ -156,7 +156,7 @@ export async function excluirPost(formData: FormData) {
 }
 
 export async function alternarFixado(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("comunicacao", "editar");
   const id = String(formData.get("id") ?? "");
   const fixar = formData.get("fixar") === "1";
   await supabase.from("posts").update({ fixado: fixar }).eq("id", id);

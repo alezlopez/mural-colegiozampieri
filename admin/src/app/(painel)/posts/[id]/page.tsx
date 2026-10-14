@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PostForm, type PostInicial } from "@/components/PostForm";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { configSupabase } from "@/lib/config";
 import { formatarDataHora } from "@/lib/datas";
 import { excluirPost } from "../../actions";
@@ -9,7 +9,7 @@ import { BotaoExcluir } from "./BotaoExcluir";
 
 export default async function EditarPublicacao({ params }: PageProps<"/posts/[id]">) {
   const { id } = await params;
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("comunicacao");
 
   const { data } = await supabase
     .from("posts")

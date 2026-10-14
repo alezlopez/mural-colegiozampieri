@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { anoEmUso } from "@/lib/ano-letivo";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { aulasPrevistas, chaveAula, type Prevista } from "@/lib/aulas-previstas";
 import { aulasLancadas, baseDoAno, maiorData, menorData } from "@/lib/aulas-previstas-db";
 import { formatarDataCurta, hojeEmBrasilia, somarDias } from "@/lib/datas";
@@ -17,7 +17,7 @@ type Vinculo = {
 const PERIODOS = { "7": "Últimos 7 dias", "30": "Últimos 30 dias", ano: "Desde o início do ano" } as const;
 
 export default async function AulasNaoLancadas({ searchParams }: PageProps<"/pendencias">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("acompanhamento");
   const p = await searchParams;
   const periodo = (typeof p.periodo === "string" && p.periodo in PERIODOS ? p.periodo : "7") as keyof typeof PERIODOS;
   const letivo = await anoEmUso(supabase);

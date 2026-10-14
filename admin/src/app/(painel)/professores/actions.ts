@@ -3,7 +3,7 @@
 import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { criarClienteServico } from "@/lib/supabase/servico";
 
 export type EstadoAcesso = { professorId?: number; senha?: string; erro?: string };
@@ -16,7 +16,7 @@ function senhaProvisoria(tamanho = 10) {
 
 /** Cria o login do professor (ou gera nova senha provisória, se já tiver). A senha aparece uma única vez. */
 export async function gerarAcesso(_: EstadoAcesso, formData: FormData): Promise<EstadoAcesso> {
-  await exigirAdmin();
+  await exigirArea("estrutura", "editar");
   const professorId = Number(formData.get("professor_id"));
   if (!Number.isInteger(professorId)) return { erro: "Professor inválido." };
 
@@ -57,7 +57,7 @@ export async function gerarAcesso(_: EstadoAcesso, formData: FormData): Promise<
 }
 
 export async function alternarAtivo(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const professorId = Number(formData.get("professor_id"));
   const ativo = formData.get("ativo") === "true";
   if (!Number.isInteger(professorId)) return;
@@ -85,7 +85,7 @@ function dadosProfessor(formData: FormData, caminho: string) {
 }
 
 export async function criarProfessor(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const { nome, email } = dadosProfessor(formData, "/professores");
   const { data, error } = await supabase
     .from("professores")
@@ -99,7 +99,7 @@ export async function criarProfessor(formData: FormData) {
 }
 
 export async function salvarProfessor(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const id = Number(formData.get("professor_id"));
   if (!Number.isInteger(id)) redirect("/professores");
   const caminho = `/professores/${id}`;
@@ -121,7 +121,7 @@ export async function salvarProfessor(formData: FormData) {
 
 /** Exclusão definitiva só para quem nunca lançou aula; os demais são inativados (o histórico fica). */
 export async function excluirProfessor(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const id = Number(formData.get("professor_id"));
   if (!Number.isInteger(id)) redirect("/professores");
   const { data: prof } = await supabase.from("professores").select("mhund_id,user_id").eq("id", id).maybeSingle();
@@ -138,7 +138,7 @@ export async function excluirProfessor(formData: FormData) {
 
 /** Atribui ao professor a disciplina numa turma. Se outro professor dava essa disciplina lá, é substituído. */
 export async function atribuirVinculo(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const professorId = Number(formData.get("professor_id"));
   const turmaIds = formData.getAll("turma_id").map(Number).filter((n) => Number.isInteger(n) && n > 0);
   const disciplinaId = Number(formData.get("disciplina_id"));
@@ -177,7 +177,7 @@ export async function atribuirVinculo(formData: FormData) {
 
 /** Tira a disciplina da turma (some do diário e do horário); a sincronização não a traz de volta. */
 export async function removerVinculo(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const professorId = Number(formData.get("professor_id"));
   const turmaId = Number(formData.get("turma_id"));
   const disciplinaId = Number(formData.get("disciplina_id"));

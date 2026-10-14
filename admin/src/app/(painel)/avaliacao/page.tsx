@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Avisos } from "@/components/Avisos";
 import { anoEmUso } from "@/lib/ano-letivo";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import type { RegraAvaliacao } from "@/lib/avaliacao";
 import { bimestresDoAno, regraDoSegmento } from "@/lib/avaliacao-db";
 import { formatarDataCurta } from "@/lib/datas";
@@ -11,7 +11,7 @@ import { publicarBoletim, salvarRegra } from "./actions";
 const LINHAS_EXTRAS = 2;
 
 export default async function PaginaAvaliacao({ searchParams }: PageProps<"/avaliacao">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("avaliacao");
   const p = await searchParams;
   const ano = Number(p.ano) || (await anoEmUso(supabase)).ano;
 

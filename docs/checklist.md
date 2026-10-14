@@ -28,7 +28,8 @@ cadastro de alunos/responsáveis continua vindo da Mhund (financeiro fica lá e 
 - [x] ~~Enturmação 2027~~: vem das matrículas 2027 da Mhund (decidido em 11/10/2026).
 - [ ] **P0 · Desativar no app quem não rematriculou**: quando? (hoje eles continuam ativos; a lista está em
       Secretaria → Rematrícula.)
-- [ ] **P1 · Perfis da equipe**: quem é secretaria, coordenação, direção (hoje todo admin vê e edita tudo).
+- [x] **P1 · Perfis da equipe**: direção, coordenação e secretaria. Tela **Equipe e permissões** (só direção): cadastra pessoa com senha provisória (troca no 1º acesso em /senha), muda perfil, gera nova senha, remove (login bloqueado, não apagado; professor mantém o diário) e define por área (Comunicação, Secretaria, Estrutura, Avaliação, Acompanhamento) se cada perfil tem sem acesso / ver / editar. Menu mostra só o permitido; telas "ver" mostram faixa de somente consulta.
+- [ ] **P2 · Permissões no banco**: hoje a checagem é no painel; no banco toda a equipe segue `is_admin()`. Endurecer o RLS por perfil se a equipe crescer ou ganhar acesso direto ao Supabase.
 - [ ] **P2 · Ocorrências disciplinares**: entram no sistema? (a Mhund tem.)
 
 ## 2. Infraestrutura e segurança

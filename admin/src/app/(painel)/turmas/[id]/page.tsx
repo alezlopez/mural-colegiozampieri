@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { lerTudo } from "@/lib/ler-tudo";
 import { adicionarAlunos, adicionarDisciplina, alternarTurma, excluirTurma, moverAlunos, retirarAlunos, salvarGrade, salvarTurma } from "../actions";
 import { CamposTurma } from "../CamposTurma";
@@ -10,7 +10,7 @@ type Matriculado = { aluno_codigo: string; numero_chamada: number | null; editad
 type Vinculo = { disciplina_id: number; professor_id: number | null; editado_no_painel: boolean; disciplinas: { nome: string } | null };
 
 export default async function PaginaTurma({ params, searchParams }: PageProps<"/turmas/[id]">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const { id: bruto } = await params;
   const p = await searchParams;
   const id = Number(bruto);

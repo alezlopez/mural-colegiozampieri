@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { ehTipoEvento, feriadosNacionais, pontosFacultativos, TIPOS_EVENTO } from "@/lib/calendario";
 
 const DATA = /^\d{4}-\d{2}-\d{2}$/;
@@ -17,7 +17,7 @@ function anoDoForm(formData: FormData) {
 }
 
 export async function salvarAnoLetivo(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const ano = anoDoForm(formData);
   const inicio = texto(formData, "inicio");
   const fim = texto(formData, "fim");
@@ -54,7 +54,7 @@ export async function salvarAnoLetivo(formData: FormData) {
 }
 
 export async function salvarEvento(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const ano = anoDoForm(formData);
   const id = Number(formData.get("id")) || null;
   const tipo = texto(formData, "tipo");
@@ -102,7 +102,7 @@ export async function salvarEvento(formData: FormData) {
 }
 
 export async function excluirEvento(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const ano = anoDoForm(formData);
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) voltar(ano, "erro", "Evento inválido.");
@@ -112,7 +112,7 @@ export async function excluirEvento(formData: FormData) {
 
 /** Inclui os feriados nacionais do ano (e, se marcados, Carnaval e Corpus Christi como recesso). Não duplica. */
 export async function importarFeriados(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura", "editar");
   const ano = anoDoForm(formData);
   const candidatos = [
     ...feriadosNacionais(ano).map((f) => ({ tipo: "feriado" as const, titulo: f.titulo, inicio: f.data, fim: f.data })),

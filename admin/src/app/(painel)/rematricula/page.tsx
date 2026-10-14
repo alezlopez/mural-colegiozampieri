@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { hojeEmBrasilia } from "@/lib/datas";
 import { relatorioRematricula, type AlunoRematricula } from "@/lib/rematricula";
 import { exibirTelefone } from "@/lib/telefone";
@@ -7,7 +7,7 @@ import { exibirTelefone } from "@/lib/telefone";
 const pct = (parte: number, total: number) => (total ? `${Math.round((parte / total) * 1000) / 10}%` : "—");
 
 export default async function PaginaRematricula({ searchParams }: PageProps<"/rematricula">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("secretaria");
   const p = await searchParams;
   const base = Number(p.base) || Number(hojeEmBrasilia().slice(0, 4));
   const alvo = base + 1;

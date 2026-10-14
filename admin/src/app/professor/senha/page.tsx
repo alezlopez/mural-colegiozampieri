@@ -1,4 +1,5 @@
 import { exigirProfessor } from "@/lib/auth";
+import { trocarSenha } from "./actions";
 import { FormSenha } from "./FormSenha";
 
 export default async function PaginaSenha() {
@@ -9,7 +10,7 @@ export default async function PaginaSenha() {
       <p className="mb-6 mt-1 text-sm text-texto-suave">
         Crie a sua senha para acessar o diário. Use pelo menos 8 caracteres; a senha provisória deixa de valer.
       </p>
-      <FormSenha />
+      <FormSenha trocarSenha={trocarSenha} />
     </div>
   );
 }

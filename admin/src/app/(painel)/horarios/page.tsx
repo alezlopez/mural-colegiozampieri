@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { SEGMENTOS } from "@/lib/segmentos";
 import { conflitosDeProfessor, DIAS_SEMANA, hhmm, minutos, type AulaModelo, type SlotHorario } from "@/lib/horarios";
 import { Avisos } from "@/components/Avisos";
@@ -18,7 +18,7 @@ type Vinculo = {
 const primeiroNome = (nome: string | undefined) => nome?.split(" ")[0] ?? "";
 
 export default async function PaginaHorarios({ searchParams }: PageProps<"/horarios">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const p = await searchParams;
   const turmaId = Number(p.turma);
   const salvo = typeof p.salvo === "string" ? p.salvo : null;

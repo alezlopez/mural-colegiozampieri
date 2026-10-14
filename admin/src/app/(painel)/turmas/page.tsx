@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avisos } from "@/components/Avisos";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { hojeEmBrasilia } from "@/lib/datas";
 import { SEGMENTOS, TURNOS } from "@/lib/segmentos";
 import { criarTurma } from "./actions";
@@ -19,7 +19,7 @@ type Turma = {
 };
 
 export default async function PaginaTurmas({ searchParams }: PageProps<"/turmas">) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("estrutura");
   const p = await searchParams;
 
   const [{ data: todas }, { data: modelos }] = await Promise.all([

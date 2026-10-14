@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { PostForm } from "@/components/PostForm";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 import { configSupabase } from "@/lib/config";
 
 export default async function NovaPublicacao() {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("comunicacao");
   const { data: turmas } = await supabase.rpc("turmas_ativas");
 
   return (

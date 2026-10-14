@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { exigirAdmin } from "@/lib/auth";
+import { exigirArea } from "@/lib/auth";
 
 const SEGMENTOS = new Set(["infantil", "fundamental1", "fundamental2", "medio"]);
 
@@ -20,7 +20,7 @@ const chaveDe = (nome: string) =>
     .slice(0, 30) || "avaliacao";
 
 export async function salvarRegra(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("avaliacao", "editar");
   const ano = Number(formData.get("ano"));
   const segmento = String(formData.get("segmento") ?? "");
   if (!Number.isInteger(ano) || !SEGMENTOS.has(segmento)) redirect("/avaliacao");
@@ -67,7 +67,7 @@ export async function salvarRegra(formData: FormData) {
 
 /** Publica (ou recolhe) o boletim do bimestre para as famílias. */
 export async function publicarBoletim(formData: FormData) {
-  const { supabase } = await exigirAdmin();
+  const { supabase } = await exigirArea("avaliacao", "editar");
   const ano = Number(formData.get("ano"));
   const numero = Number(formData.get("numero"));
   const publicar = formData.get("publicar") === "true";
