@@ -182,11 +182,16 @@ Mhund**; na virada (Fase B) faz-se uma última importação e, dali em diante, a
       acesso só com ordem judicial). A sincronização só remove acessos que ela criou (`origem = mhund`).
 - [x] Matricular / trocar de turma pela página do aluno (inclusive turmas do ano seguinte).
 - [x] Dados pessoais em tabela só da equipe (`aluno_dados`): professor não vê CPF, RG nem endereço.
-- [ ] **Descobrir o que a API da Mhund devolve**: rodar à noite
-      `.../api/cron/sincronizar-mhund?ano=2027&campos=1` (só nomes de campos, sem dados pessoais) e decidir o que
-      importar (nascimento, CPF, endereço, pais…) para não redigitar ~513 cadastros.
-- [ ] Importação desses campos da Mhund preenchendo só o que está vazio no painel (nunca sobrescreve o que a
-      secretaria editou).
+- [x] **O que a API da Mhund devolve** (16/10/2026, `?campos=1`): aluno → sexo, nascimento, e-mail/celular, data de
+      ingresso, ids de pai/mãe/financeiro; responsáveis → nome, CPF, e-mail, relação, nascimento, celular, financeiro.
+      **Não existem lá:** CPF, RG, endereço e naturalidade do aluno; RG, estado civil e naturalidade dos pais.
+- [x] Importação na sincronização noturna, **só preenchendo o que está vazio**: nascimento do aluno; pai, mãe e
+      outros responsáveis (pessoa única por id da Mhund/CPF) e vínculos com parentesco. Vínculos importados entram com
+      acesso ao app só para o financeiro (o de pai/mãe a secretaria libera no cadastro).
+- [ ] Rodar uma vez `?ano=2027&simular=1` à noite e conferir o bloco `"cadastro"` antes da carga real.
+- [ ] Decidir: importar **sexo** do aluno (exigido no Censo Escolar)? Não estava na lista da ficha.
+- [ ] Digitação pela secretaria do que a Mhund não tem (CPF/RG/endereço/naturalidade). Ideia: a família preenche no
+      app e a secretaria confere.
 - [ ] Rodar no SQL Editor (limpeza; colunas vazias de uma 1ª versão):
       `alter table public.alunos drop column if exists nome_social, drop column if exists nascimento, drop column if exists naturalidade, drop column if exists nacionalidade, drop column if exists cpf, drop column if exists rg, drop column if exists cep, drop column if exists logradouro, drop column if exists numero, drop column if exists complemento, drop column if exists bairro, drop column if exists cidade, drop column if exists uf, drop column if exists cadastro_atualizado_em;`
 - [ ] Relatório de cadastros incompletos (sem CPF, sem endereço, sem responsável financeiro com celular).
@@ -222,4 +227,4 @@ planos e descontos/bolsas, multa e juros, nota fiscal de serviço (NFS-e), régu
 
 ---
 
-Última atualização: 14/10/2026.
+Última atualização: 16/10/2026.

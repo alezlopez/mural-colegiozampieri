@@ -27,9 +27,19 @@ export type MhundMatricula = {
   situacao: string | null;
 };
 
-export type MhundAluno = { idDoAluno: number; nome: string; descricaoUltimoCurso: string | null; situacao: string | null };
-export type MhundResponsavel = {
+export type MhundAluno = {
   idDoAluno: number;
+  nome: string;
+  descricaoUltimoCurso: string | null;
+  situacao: string | null;
+  dataDeNascimento?: string | null;
+};
+export type MhundResponsavel = {
+  idDoResponsavel?: number | null;
+  idDoAluno: number;
+  email?: string | null;
+  relacao?: string | null;
+  dataDeNascimento?: string | null;
   nome: string | null;
   cpf: string | null;
   celular: string | null;

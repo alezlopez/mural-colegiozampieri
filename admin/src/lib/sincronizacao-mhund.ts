@@ -9,6 +9,7 @@ import {
   type MhundProfessor,
   type MhundResponsavel,
 } from "./mhund";
+import { importarCadastro, type ResumoCadastro } from "./importacao-cadastro";
 import { lerTudo } from "./ler-tudo";
 
 // Copia da Mhund para o hub: alunos, responsável financeiro (celular e CPF, usados no login do app), turmas,
@@ -23,7 +24,7 @@ import { lerTudo } from "./ler-tudo";
 const CURSANDO = "L";
 
 const MINUSCULAS = new Set(["de", "da", "do", "das", "dos", "e"]);
-function nomeProprio(bruto: string) {
+export function nomeProprio(bruto: string) {
   return bruto
     .toLowerCase()
     .replace(/\s+/g, " ")
@@ -99,6 +100,8 @@ export type ResumoSincronizacao = {
   responsaveisSemCelular: string[];
   /** Alunos cursando sem responsável financeiro marcado na Mhund. */
   alunosSemResponsavelFinanceiro: string[];
+  /** Cadastro do painel completado com a Mhund (só campos vazios; nada editado no painel é sobrescrito). */
+  cadastro?: ResumoCadastro;
 };
 
 export const DESDE_SEMPRE = "2020-01-01T00:00:00";
@@ -328,7 +331,12 @@ export async function sincronizarMhund(
     responsaveisSemCelular,
     alunosSemResponsavelFinanceiro,
   };
-  if (simular) return resumo;
+  const cadastro = (simulacao: boolean) =>
+    importarCadastro(db, { alunos: alunosMhund, responsaveis: responsaveisMhund, codigosValidos: codigosNoHub, simular: simulacao }, { nomeProprio, celular, cpfValido });
+  if (simular) {
+    resumo.cadastro = await cadastro(true);
+    return resumo;
+  }
 
   const falhou = (etapa: string, e: { message: string } | null) => {
     if (e) throw new Error(`Sincronização (${etapa}): ${e.message}`);
@@ -445,5 +453,7 @@ export async function sincronizarMhund(
     );
   }
 
+  // Depois dos alunos gravados (o cadastro referencia alunos.codigo).
+  resumo.cadastro = await cadastro(false);
   return resumo;
 }
