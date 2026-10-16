@@ -172,6 +172,20 @@ Mhund**; na virada (Fase B) faz-se uma última importação e, dali em diante, a
 é "dono" do cadastro de cada vez — nunca os dois.
 
 **Fase A — cadastro complementar (Mhund ainda é a dona de nome, turma e responsável financeiro)**
+
+> **Situação em 16/10/2026: nenhum dado importado ainda.** No banco: 0 responsáveis vindos da Mhund, 1 aluno com
+> dados pessoais (teste manual). A sincronização das 19h10 de 16/10 rodou **sem** a importação de cadastro — o painel
+> no ar ainda não tinha essa versão (conferir o deploy no Easypanel / auto deploy).
+>
+> **Ordem para colocar o cadastro no ar:**
+> 1. [ ] Deploy do painel com a versão atual (Easypanel) — conferir em Deployments que é o commit mais recente.
+> 2. [ ] À noite (18h–8h), rodar `?ano=2027&simular=1` e conferir o bloco `"cadastro"` (quantos nascimentos,
+>        responsáveis e vínculos seriam criados).
+> 3. [ ] Deixar a sincronização das 19h10 rodar (importa nascimento + pai/mãe/responsáveis da API).
+> 4. [ ] Montar na Mhund o CSV de **alunos** pelo modelo → Secretaria → Importar CSV → Conferir → Importar.
+> 5. [ ] Montar o CSV de **responsáveis** pelo modelo → Conferir → Importar (só depois do passo 3).
+> 6. [ ] Conferir alguns alunos no painel (Cadastro e matrícula) e liberar o acesso ao app de pai/mãe onde fizer sentido.
+> 7. [ ] Rodar a limpeza das colunas antigas no SQL Editor (item abaixo).
 - [x] Página **Cadastro e matrícula** do aluno (Secretaria → Alunos → aluno): dados pessoais — nome social, nascimento,
       naturalidade, nacionalidade (padrão Brasileira), CPF, RG, endereço com busca pelo CEP (ViaCEP). Telefone e
       e-mail do aluno = os do responsável financeiro.
