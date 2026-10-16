@@ -23,7 +23,7 @@ export const alcanca = (tem: Nivel, precisa: Nivel) => ORDEM[tem] >= ORDEM[preci
 export function areaDoCaminho(pathname: string): Area | null {
   const p = pathname.replace(/\/+$/, "") || "/";
   if (p === "/" || p.startsWith("/posts") || p.startsWith("/fotos")) return "comunicacao";
-  if (p.startsWith("/rematricula") || /^\/alunos\/[^/]+\/cadastro/.test(p)) return "secretaria";
+  if (p.startsWith("/rematricula") || p.startsWith("/importacao") || /^\/alunos\/[^/]+\/cadastro/.test(p)) return "secretaria";
   if (p === "/alunos") return null; // busca: serve à secretaria (cadastro) e à coordenação (ficha)
   if (["/matriz", "/turmas", "/disciplinas", "/professores", "/horarios", "/calendario"].some((r) => p.startsWith(r))) return "estrutura";
   if (p.startsWith("/avaliacao")) return "avaliacao";
@@ -54,6 +54,7 @@ export const MENU: { titulo: string; itens: { href: string; rotulo: string; area
     itens: [
       { href: "/alunos", rotulo: "Alunos", area: "secretaria" },
       { href: "/rematricula", rotulo: "Rematrícula", area: "secretaria" },
+      { href: "/importacao", rotulo: "Importar CSV", area: "secretaria" },
     ],
   },
   {

@@ -189,9 +189,13 @@ Mhund**; na virada (Fase B) faz-se uma última importação e, dali em diante, a
       outros responsáveis (pessoa única por id da Mhund/CPF) e vínculos com parentesco. Vínculos importados entram com
       acesso ao app só para o financeiro (o de pai/mãe a secretaria libera no cadastro).
 - [ ] Rodar uma vez `?ano=2027&simular=1` à noite e conferir o bloco `"cadastro"` antes da carga real.
-- [ ] Decidir: importar **sexo** do aluno (exigido no Censo Escolar)? Não estava na lista da ficha.
+- [x] Sexo do aluno (Censo Escolar): campo no cadastro e coluna no CSV de alunos.
 - [ ] Digitação pela secretaria do que a Mhund não tem (CPF/RG/endereço/naturalidade). Ideia: a família preenche no
       app e a secretaria confere.
+- [x] **Importar CSV** (Secretaria → Importar CSV): modelos de alunos (CPF, RG, sexo, nascimento, naturalidade,
+      nacionalidade, endereço) e de responsáveis (RG, estado civil, naturalidade, nacionalidade, nome social); conferir
+      antes de gravar; só preenche campos vazios. O arquivo vai direto ao banco (não passa pelo chat).
+- [ ] Montar os CSVs na Mhund pelos modelos e importar (alunos primeiro; responsáveis depois da sincronização noturna).
 - [ ] Rodar no SQL Editor (limpeza; colunas vazias de uma 1ª versão):
       `alter table public.alunos drop column if exists nome_social, drop column if exists nascimento, drop column if exists naturalidade, drop column if exists nacionalidade, drop column if exists cpf, drop column if exists rg, drop column if exists cep, drop column if exists logradouro, drop column if exists numero, drop column if exists complemento, drop column if exists bairro, drop column if exists cidade, drop column if exists uf, drop column if exists cadastro_atualizado_em;`
 - [ ] Relatório de cadastros incompletos (sem CPF, sem endereço, sem responsável financeiro com celular).

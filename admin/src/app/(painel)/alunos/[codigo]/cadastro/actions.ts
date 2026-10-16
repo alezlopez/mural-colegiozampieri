@@ -44,6 +44,7 @@ export async function salvarDadosAluno(formData: FormData) {
   const { error } = await supabase.from("aluno_dados").upsert({
     aluno_codigo: codigo,
     nome_social: texto(formData, "nome_social"),
+    sexo: ["M", "F"].includes(String(formData.get("sexo"))) ? String(formData.get("sexo")) : null,
     nascimento: data(formData, "nascimento"),
     naturalidade: texto(formData, "naturalidade"),
     nacionalidade: texto(formData, "nacionalidade") ?? "Brasileira",

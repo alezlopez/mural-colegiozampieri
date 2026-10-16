@@ -11,6 +11,7 @@ import { CamposResponsavel, PARENTESCOS, type Responsavel, type Vinculo } from "
 
 type Dados = {
   nome_social: string | null;
+  sexo: "M" | "F" | null;
   nascimento: string | null;
   naturalidade: string | null;
   nacionalidade: string;
@@ -133,7 +134,15 @@ export default async function CadastroDoAluno({ params, searchParams }: PageProp
                 <input name="nome_social" defaultValue={dados?.nome_social ?? ""} className="campo" />
               </label>
             </div>
-            <div className="grid gap-3 sm:grid-cols-5">
+            <div className="grid gap-3 sm:grid-cols-6">
+              <label className="block">
+                <span className="rotulo">Sexo</span>
+                <select name="sexo" defaultValue={dados?.sexo ?? ""} className="campo">
+                  <option value="">—</option>
+                  <option value="F">Feminino</option>
+                  <option value="M">Masculino</option>
+                </select>
+              </label>
               <label className="block">
                 <span className="rotulo">Nascimento</span>
                 <input name="nascimento" type="date" defaultValue={dados?.nascimento ?? ""} className="campo" />
